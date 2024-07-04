@@ -39,6 +39,24 @@ conda activate exerLLM
 ### 2.3. Datasets
 (list links and download and sample file directory tree)
 
+UI-PRMD: 
+- using only segmented files from Kinect
+
+```
+./dataset/UI-PRMD/
+├── UI-PRMD
+    ├── Correct
+        ├── Kinect
+            ├── Angles/
+            ├── Positions
+                |-- m01_s01_e01_positions.txt
+                |-- m01_s01_e02_positions.txt
+                |-- ...
+                |-- m10_s10_e10_positions.txt
+    |-- Incorrect/
+└── UI-PRMD_visualization.ipynb
+```
+
 ### 2.4. Motion & text feature extractors:
 ??
 
@@ -55,7 +73,7 @@ conda activate exerLLM
 ## 4. Evaluation 
 
 ## 5. Visualization
-
+Visualize UI-PRMD movements by running `UI-PRMD/UI-PRMD_visualization.ipynb`
 
 ### 6. Acknowledgements
 
