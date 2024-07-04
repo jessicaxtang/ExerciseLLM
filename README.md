@@ -43,17 +43,17 @@ UI-PRMD:
 - using only segmented files from Kinect
 
 ```
-./dataset/UI-PRMD/
+./dataset/
 ├── UI-PRMD
-    ├── Correct
-        ├── Kinect
-            ├── Angles/
-            ├── Positions
-                |-- m01_s01_e01_positions.txt
-                |-- m01_s01_e02_positions.txt
-                |-- ...
-                |-- m10_s10_e10_positions.txt
-    |-- Incorrect/
+    ├── correct
+        ├── kinect
+            ├── angles/
+            ├── positions
+                ├── m01_s01_e01_positions.txt
+                ├── m01_s01_e02_positions.txt
+                ├── ...
+                ├── m10_s10_e10_positions.txt
+    ├── incorrect/
 └── UI-PRMD_visualization.ipynb
 ```
 
@@ -73,7 +73,7 @@ UI-PRMD:
 ## 4. Evaluation 
 
 ## 5. Visualization
-Visualize UI-PRMD movements by running `UI-PRMD/UI-PRMD_visualization.ipynb`
+Visualize UI-PRMD movements by running `visualization/UI-PRMD_visualization.ipynb`
 
 ### 6. Acknowledgements
 
