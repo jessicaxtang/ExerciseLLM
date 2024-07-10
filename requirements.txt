@@ -1,6 +1,7 @@
-torch
-numpy
-transformers
 accelerate
-matplotlib
 ipykernel
+matplotlib
+numpy
+pandas
+torch
+transformers
