@@ -14,21 +14,29 @@ Jul 4, 2024
 """
 
 import os
+import pandas as pd
 import numpy as np
 import options.option_data as option_data
 from utils.skel_features import extract_features
+from utils.skel_conversions import rel2abs, transform_data
 
 # run below command in terminal 
 # ex. UI-PRMD\correct\kinect\positions\m07_s01_e01_positions.txt
 '''
 python LLM_preprocess.py --dataname UI-PRMD --input_type raw --downsample 5 --joints 12 13 14 --device kinect --correctness correct --subdir positions --m 7 --s 1 --e 1
+
+python LLM_preprocess.py --dataname UI-PRMD --input_type features --downsample 1 --joints 12 13 14 --device kinect --correctness correct --subdir positions --m 7 --s 1 --e 1
 '''
 
-def temporal_downsample(data, downsample_rate):
-    '''
-    downsample_rate: int
-    '''
-    return data[::downsample_rate]
+# order of joint connections
+J = np.array([[3, 5, 4, 2, 1, 2, 6, 7, 8, 2, 10, 11, 12, 0, 14, 15, 16, 0, 18, 19, 20],
+              [2, 4, 2, 1, 0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]])
+
+# def temporal_downsample(data, downsample_rate):
+#     '''
+#     downsample_rate: int
+#     '''
+#     return data[::downsample_rate]
 
 def relevant_joints(data, joints):
     '''
@@ -64,18 +72,33 @@ def relevant_features(data, features):
     return features_data
 
 def preprocess_raw_joints(data_file, downsample_rate):
-    data_sliced = temporal_downsample(data_file, downsample_rate)
     # pick a few joints relevant joints for shoulder abduction
     # for example, 12: right upper arm, 13: right forearm, 14: right hand
-    data_sliced = relevant_joints(data_sliced, joints)
-    return data_sliced
+    column_names = ['Right Upper Arm', 'Right Forearm', 'Right Hand']
+    data_relevant = relevant_joints(data_file, joints)
 
-def preprocess_features(data_file, downsample_rate):
+    # downsample and convert to pandas dataframe
+    print((data_relevant[::downsample_rate, :]).shape)
+    df_sliced = pd.DataFrame(data_relevant[::downsample_rate, :], columns=column_names)
 
-    
-    data_sliced = temporal_downsample(data_file, downsample_rate)
+    return df_sliced
 
-    return data_sliced
+def preprocess_features(pos_data, ang_data, num_kp, num_axes, downsample_rate):
+    p_data = transform_data(pos_data, num_kp, num_axes)
+    a_data = transform_data(ang_data, num_kp, num_axes)
+    p = np.copy(p_data)
+    a = np.copy(a_data)
+
+    skel = rel2abs(p, a, num_kp, num_axes, num_frames)
+
+    new = np.transpose(skel, (2, 0, 1))
+    features = np.array(extract_features(new), dtype=int)
+    column_names = ['Shoulder Abduction Angle', 'Elbow Flexion Angle', 'Torso Inclination Angle']
+
+    # downsample and convert to pandas dataframe
+    df_sliced = pd.DataFrame(features[::downsample_rate, :], columns=column_names)
+
+    return df_sliced
 
 if __name__ == '__main__':
 
@@ -84,8 +107,7 @@ if __name__ == '__main__':
     dataname = args.dataname
     input_type = args.input_type
     downsample_rate = args.downsample
-    joints = args.joints
-    print("Joints: ", joints)
+    joints = args.joints # maybe remove this if we predefine joints for each exercise
     device = args.device
     correctness = args.correctness
     cor_tag = ''
@@ -96,25 +118,34 @@ if __name__ == '__main__':
     s = args.s
     e = args.e
 
-
+    num_kp = 22 # turn into a parameter
+    num_axes = 3 # turn into a parameter
 
     # load data
-    data_path = 'dataset/{}/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}_{}{}.txt'.format(dataname, correctness, device, subdir, m, s, e, subdir, cor_tag)
-    # print("Data path:", data_path)
-    data_file = np.loadtxt(data_path, delimiter=',')
-    data_file = data_file.reshape(data_file.shape[0], -1, 3) # from (frames, 66) to (frames, 22, 3)
-    # print("data_file shape: ", data_file.shape)
-    # print(data_file[0])
+    pos_path = 'dataset/{}/{}/{}/positions/m{:02d}_s{:02d}_e{:02d}_positions{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
+    ang_path = 'dataset/{}/{}/{}/angles/m{:02d}_s{:02d}_e{:02d}_angles{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
+
+    pos_data = np.loadtxt(pos_path, delimiter=',')
+    ang_data = np.loadtxt(pos_path, delimiter=',')
+
+    num_frames = pos_data.shape[0] # pos and ang data should have the same number of frames
+    # pos_data = pos_data.reshape(pos_data.shape[0], -1, 3) # from (frames, 66) to (frames, 22, 3)
+    # ang_data = ang_data.reshape(ang_data.shape[0], -1, 3)
 
     if input_type == 'raw':
-        data_file = preprocess_raw_joints(data_file, downsample_rate)
+        data_file = preprocess_raw_joints(pos_data, downsample_rate)
+        # TO FIX: i think the data is wrong
+    elif input_type == 'features':
+        data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, downsample_rate)
 
-    save_dir = 'dataset/{}/{}/{}/{}/{}'.format(dataname, correctness, device, subdir, input_type)
+    save_dir = 'dataset/{}/{}/{}/{}_{}'.format(dataname, correctness, device, input_type, subdir)
     print("Save directory: ", save_dir)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
     # save_path = subdir + '_' + correctness + '_m{:02d}_s{:02d}_e{:02d}.npy'.format(m, s, e)
-    save_path = 'dataset/{}/{}/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}_{}{}_dr{:02d}'.format(dataname, correctness, device, subdir, input_type, m, s, e, subdir, cor_tag, downsample_rate)
-    print("Save path: ", save_path)
-    np.save(save_path, data_file)
+    save_path = 'dataset/{}/{}/{}/{}_{}/m{:02d}_s{:02d}_e{:02d}{}_dr{:02d}'.format(dataname, correctness, device, input_type, subdir, m, s, e, cor_tag, downsample_rate)
+    # print("Save path: ", save_path)
+    # np.save(save_path, data_file)
+
+    data_file.to_csv(save_path + '.csv', index=False)
