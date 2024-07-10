@@ -1,0 +1,11 @@
+# Ignore macOS specific files
+.DS_Store
+
+# Ignore environment configuration files that may contain sensitive information
+.venv
+
+# Ignore all files in a directory except one
+dataset/*
+!dataset/UI-PRMD/UI-PRMD_visualization.ipynb
+
+# git rm --cached <file-path>

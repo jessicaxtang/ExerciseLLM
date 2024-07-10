@@ -16,6 +16,7 @@ Jul 4, 2024
 import os
 import numpy as np
 import options.option_data as option_data
+from utils.skel_features import extract_features
 
 # run below command in terminal 
 # ex. UI-PRMD\correct\kinect\positions\m07_s01_e01_positions.txt
@@ -35,15 +36,46 @@ def relevant_joints(data, joints):
     '''
     return data[:, joints]
 
+def relevant_features(data, features):
+    '''
+    features: a list of indices of most relevant features for this exercise
+    as defined in Exercise-Specific Feature Extraction Approach for Assessing Physical Rehabilitation (Guo 2021)
+
+    0 left elbow angle
+    1 right elbow angle
+    2 hand shoulder ratio
+    3 torso tilted angle 
+    4 hand tilted angle
+    5 elbow angles diff
+    6 left shoulder angle
+    7 right shoulder angle
+    8 left arm torso angle
+    9 right arm torso angle
+    10 knee hip ratio
+    11 shoulder level angle
+    12 left knee angle
+    13 right knee angle
+    '''
+    features_data = []
+    for feature in features:
+        if feature == 1:
+            features_data.append(data[:, 13] - data[:, 12])
+        features_data.append()
+    return features_data
+
 def preprocess_raw_joints(data_file, downsample_rate):
     data_sliced = temporal_downsample(data_file, downsample_rate)
     # pick a few joints relevant joints for shoulder abduction
-    # 12: right upper arm, 13: right forearm, 14: right hand
+    # for example, 12: right upper arm, 13: right forearm, 14: right hand
     data_sliced = relevant_joints(data_sliced, joints)
     return data_sliced
 
+def preprocess_features(data_file, downsample_rate):
 
-# def preprocess_features(device, correctness, subdir, m, s, e):
+    
+    data_sliced = temporal_downsample(data_file, downsample_rate)
+
+    return data_sliced
 
 if __name__ == '__main__':
 

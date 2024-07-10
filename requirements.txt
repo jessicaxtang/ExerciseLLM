@@ -1,7 +1,0 @@
-accelerate
-ipykernel
-matplotlib
-numpy
-pandas
-torch
-transformers
