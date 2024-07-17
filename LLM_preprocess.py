@@ -138,13 +138,14 @@ if __name__ == '__main__':
     elif input_type == 'features':
         data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, downsample_rate)
 
-    save_dir = 'dataset/{}/{}/{}/{}_{}'.format(dataname, correctness, device, input_type, subdir)
+    # save_dir = 'dataset/{}/{}/{}/{}_{}'.format(dataname, correctness, device, input_type, subdir)
+    save_dir = 'dataset/{}_LLM/{}/{}/{}'.format(dataname, correctness, device, input_type)
     print("Save directory: ", save_dir)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
     # save_path = subdir + '_' + correctness + '_m{:02d}_s{:02d}_e{:02d}.npy'.format(m, s, e)
-    save_path = 'dataset/{}/{}/{}/{}_{}/m{:02d}_s{:02d}_e{:02d}{}_dr{:02d}'.format(dataname, correctness, device, input_type, subdir, m, s, e, cor_tag, downsample_rate)
+    save_path = 'dataset/{}_LLM/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}{}_dr{:02d}_{}'.format(dataname, correctness, device, input_type, m, s, e, cor_tag, downsample_rate, input_type)
     # print("Save path: ", save_path)
     # np.save(save_path, data_file)
 
