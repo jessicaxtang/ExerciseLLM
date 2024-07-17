@@ -25,7 +25,7 @@ from utils.skel_conversions import rel2abs, transform_data
 '''
 python LLM_preprocess.py --dataname UI-PRMD --input_type raw --downsample 5 --joints 12 13 14 --device kinect --correctness correct --subdir positions --m 7 --s 1 --e 1
 
-python LLM_preprocess.py --dataname UI-PRMD --input_type features --downsample 1 --joints 12 13 14 --device kinect --correctness correct --subdir positions --m 7 --s 1 --e 1
+python LLM_preprocess.py --dataname UI-PRMD --input_type features --downsample 1 --joints 12 13 14 --device kinect --correctness incorrect --subdir positions --m 7 --s 1 --e 4
 '''
 
 # order of joint connections
@@ -86,12 +86,14 @@ def preprocess_raw_joints(data_file, downsample_rate):
 def preprocess_features(pos_data, ang_data, num_kp, num_axes, downsample_rate):
     p_data = transform_data(pos_data, num_kp, num_axes)
     a_data = transform_data(ang_data, num_kp, num_axes)
+
     p = np.copy(p_data)
     a = np.copy(a_data)
 
     skel = rel2abs(p, a, num_kp, num_axes, num_frames)
-
+    
     new = np.transpose(skel, (2, 0, 1))
+
     features = np.array(extract_features(new), dtype=int)
     column_names = ['Shoulder Abduction Angle', 'Elbow Flexion Angle', 'Torso Inclination Angle']
 
@@ -125,13 +127,15 @@ if __name__ == '__main__':
     pos_path = 'dataset/{}/{}/{}/positions/m{:02d}_s{:02d}_e{:02d}_positions{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
     ang_path = 'dataset/{}/{}/{}/angles/m{:02d}_s{:02d}_e{:02d}_angles{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
 
+    print("pos_path: ", pos_path)
+    print("ang_path: ", ang_path)
+
     pos_data = np.loadtxt(pos_path, delimiter=',')
-    ang_data = np.loadtxt(pos_path, delimiter=',')
+    ang_data = np.loadtxt(ang_path, delimiter=',')
 
     num_frames = pos_data.shape[0] # pos and ang data should have the same number of frames
-    # pos_data = pos_data.reshape(pos_data.shape[0], -1, 3) # from (frames, 66) to (frames, 22, 3)
-    # ang_data = ang_data.reshape(ang_data.shape[0], -1, 3)
 
+    data_file = 0
     if input_type == 'raw':
         data_file = preprocess_raw_joints(pos_data, downsample_rate)
         # TO FIX: i think the data is wrong
@@ -140,13 +144,13 @@ if __name__ == '__main__':
 
     # save_dir = 'dataset/{}/{}/{}/{}_{}'.format(dataname, correctness, device, input_type, subdir)
     save_dir = 'dataset/{}_LLM/{}/{}/{}'.format(dataname, correctness, device, input_type)
-    print("Save directory: ", save_dir)
+    # print("Save directory: ", save_dir)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
     # save_path = subdir + '_' + correctness + '_m{:02d}_s{:02d}_e{:02d}.npy'.format(m, s, e)
     save_path = 'dataset/{}_LLM/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}{}_dr{:02d}_{}'.format(dataname, correctness, device, input_type, m, s, e, cor_tag, downsample_rate, input_type)
-    # print("Save path: ", save_path)
+    print("Save path: ", save_path)
     # np.save(save_path, data_file)
 
     data_file.to_csv(save_path + '.csv', index=False)
