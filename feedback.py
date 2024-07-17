@@ -58,8 +58,8 @@ sliced_motion = np.load('positions_incorrect_m07_s01_e01.npy')
 motion_name = 'right shoulder abduction'
 
 # prompt = "Q: is the " + motion_name + " exercise performed correctly given position data of the right upper arm, forearm, and hand?\n" + str(sliced_motion) + " A:"
-prompt = "Q: is the " + motion_name + " exercise performed correctly, can you provide feedback to help me correct it? Here is position data of the right upper arm, forearm, and hand?\n" + str(sliced_motion) + "A:"
-# prompt = "Q:what is the capital of India? A:"
+# prompt = "Q: is the " + motion_name + " exercise performed correctly, can you provide feedback to help me correct it? Here is position data of the right upper arm, forearm, and hand?\n" + str(sliced_motion) + "A:"
+prompt = "Q: I am providing you with the x, y, and z coordinates of position data of the right upper arm, forearm, and hand from someone completing the right shoulder abduction exercise. Using just this data, tell me if the exercise was performed correctly or not. (don't ask for additional data)\r\n" + str(sliced_motion) + "\nA:"
 
 # inputs = tokenizer(prompt, return_tensors="pt").to(device)
 # outputs = model.generate(**inputs, max_new_tokens=10)
