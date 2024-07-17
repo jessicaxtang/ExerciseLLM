@@ -87,8 +87,8 @@ def extract_features(joint_data):
 
         torso_inclination_angle = calculate_angle_between_vectors(vertical_vector, torso_vector)
 
-        features[i] = [180 - shoulder_abduction_angle, elbow_flexion_angle, torso_inclination_angle]
-        # features[i] = [270 - shoulder_abduction_angle, 180 - elbow_flexion_angle, torso_inclination_angle]
+        # features[i] = [180 - shoulder_abduction_angle, elbow_flexion_angle, torso_inclination_angle]
+        features[i] = [180 - shoulder_abduction_angle, 180 - elbow_flexion_angle, torso_inclination_angle - 123]
 
     return features
 
