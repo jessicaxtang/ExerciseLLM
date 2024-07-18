@@ -55,7 +55,7 @@ if __name__ == '__main__':
                 ang_path = 'dataset/{}/{}/{}/angles/m{:02d}_s{:02d}_e{:02d}_angles{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
 
                 pos_data = np.loadtxt(pos_path, delimiter=',')
-                ang_data = np.loadtxt(pos_path, delimiter=',')
+                ang_data = np.loadtxt(ang_path, delimiter=',')
 
                 num_frames = pos_data.shape[0]
 
