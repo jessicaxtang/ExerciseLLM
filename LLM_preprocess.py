@@ -21,22 +21,48 @@ from utils.skel_features import extract_features
 from utils.skel_conversions import rel2abs, transform_data
 
 # run below command in terminal 
-# ex. UI-PRMD\correct\kinect\positions\m07_s01_e01_positions.txt
+# ex. UI-PRMD\correct\kinect\positions\m07_s01_e01_positions.txts
 '''
 python LLM_preprocess.py --dataname UI-PRMD --input_type raw --downsample 5 --joints 12 13 14 --device kinect --correctness correct --subdir positions --m 7 --s 1 --e 1
 
-python LLM_preprocess.py --dataname UI-PRMD --input_type features --downsample 1 --joints 12 13 14 --device kinect --correctness incorrect --subdir positions --m 7 --s 1 --e 4
+python3 LLM_preprocess.py --dataname UI-PRMD --input_type features --downsample 1 --joints 12 13 14 --device kinect --correctness incorrect --subdir positions --m 7 --s 1 --e 4
 '''
 
 # order of joint connections
 J = np.array([[3, 5, 4, 2, 1, 2, 6, 7, 8, 2, 10, 11, 12, 0, 14, 15, 16, 0, 18, 19, 20],
               [2, 4, 2, 1, 0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]])
 
-# def temporal_downsample(data, downsample_rate):
-#     '''
-#     downsample_rate: int
-#     '''
-#     return data[::downsample_rate]
+def relevant_frames(features, downsample_rate):
+    '''
+    features: a numpy array of features extracted from the data
+    downsample_rate: int
+    '''
+
+    indices = []
+
+    frame_max = np.argmax(features, axis=0) # indices with max shoulder abduction angle
+    frame_max = np.sort(frame_max).tolist()
+    indices.extend(frame_max)
+
+    # min features BEFORE first max angles
+    frame_min = np.argmin(features[:frame_max[0]], axis=0) # indices with min shoulder abduction angle
+    frame_min = np.sort(frame_min).tolist()
+    indices.extend(frame_min)
+
+    # min features AFTER last max angles
+    frame_min = np.argmin(features[frame_max[-1]:], axis=0) # indices with min shoulder abduction angle
+    frame_min += frame_max[-1]
+    frame_min = np.sort(frame_min).tolist()
+    indices.extend(frame_min)
+
+    indices = sorted(indices)
+    # print("sorted indices: ", indices)
+    # print("type(indices): ", type(indices))
+
+    features_sliced = features[indices]
+    # print("features_sliced", features_sliced)
+
+    return features_sliced
 
 def relevant_joints(data, joints):
     '''
@@ -98,9 +124,10 @@ def preprocess_features(pos_data, ang_data, num_kp, num_axes, downsample_rate):
     column_names = ['Shoulder Abduction Angle', 'Elbow Flexion Angle', 'Torso Inclination Angle']
 
     # downsample and convert to pandas dataframe
-    df_sliced = pd.DataFrame(features[::downsample_rate, :], columns=column_names)
+    features_sliced = relevant_frames(features, downsample_rate)
+    features_sliced = pd.DataFrame(features_sliced, columns=column_names)
 
-    return df_sliced
+    return features_sliced
 
 if __name__ == '__main__':
 
