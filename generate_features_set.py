@@ -16,50 +16,13 @@ Jul 4, 2024
 import os
 import pandas as pd
 import numpy as np
-import options.option_data as option_data
-from utils.skel_features import extract_features
-from utils.skel_conversions import rel2abs, transform_data
-
-# run below command in terminal 
-# ex. UI-PRMD\correct\kinect\positions\m07_s01_e01_positions.txt
-'''
-python LLM_preprocess.py --dataname UI-PRMD --input_type raw --downsample 5 --joints 12 13 14 --device kinect --correctness correct --subdir positions --m 7 --s 1 --e 1
-
-python LLM_preprocess.py --dataname UI-PRMD --input_type features --downsample 1 --joints 12 13 14 --device kinect --correctness correct --subdir positions --m 7 --s 1 --e 1
-'''
+# from utils.skel_features import extract_features
+# from utils.skel_conversions import rel2abs, transform_data
+from LLM_preprocess import preprocess_features
 
 # order of joint connections
 J = np.array([[3, 5, 4, 2, 1, 2, 6, 7, 8, 2, 10, 11, 12, 0, 14, 15, 16, 0, 18, 19, 20],
               [2, 4, 2, 1, 0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]])
-
-# def temporal_downsample(data, downsample_rate):
-#     '''
-#     downsample_rate: int
-#     '''
-#     return data[::downsample_rate]
-
-def relevant_joints(data, joints):
-    '''
-    joints: a list of most relevant joints ranging from 1 to 22 for kinect, 1 to 39 for vicon
-    '''
-    return data[:, joints]
-
-def preprocess_features(pos_data, ang_data, num_kp, num_axes, downsample_rate):
-    p_data = transform_data(pos_data, num_kp, num_axes)
-    a_data = transform_data(ang_data, num_kp, num_axes)
-    p = np.copy(p_data)
-    a = np.copy(a_data)
-
-    skel = rel2abs(p, a, num_kp, num_axes, num_frames)
-
-    new = np.transpose(skel, (2, 0, 1))
-    features = np.array(extract_features(new), dtype=int)
-    column_names = ['Shoulder Abduction Angle', 'Elbow Flexion Angle', 'Torso Inclination Angle']
-
-    # downsample and convert to pandas dataframe
-    df_sliced = pd.DataFrame(features[::downsample_rate, :], columns=column_names)
-
-    return df_sliced
 
 if __name__ == '__main__':
 
