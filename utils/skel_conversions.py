@@ -88,7 +88,8 @@ def rel2abs(p, a, num_kp, num_axes, num_frames):
 
         # right-leg
         rot = eulers_2_rot_matrix(joint_ang[0, :] * np.pi / 180)
-        for j in range(18, 22):
+        joint[18, :] = rot @ joint[18, :] + joint[0, :]
+        for j in range(19, 22):
             rot = rot @ eulers_2_rot_matrix(joint_ang[j - 1, :] * np.pi / 180)
             joint[j, :] = rot @ joint[j, :] + joint[j - 1, :]
 
