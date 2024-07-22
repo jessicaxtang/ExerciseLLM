@@ -25,7 +25,7 @@ from utils.skel_conversions import rel2abs, transform_data
 '''
 python LLM_preprocess.py --dataname UI-PRMD --input_type raw --downsample 5 --joints 12 13 14 --device kinect --correctness correct --subdir positions --m 7 --s 1 --e 1
 
-python3 LLM_preprocess.py --dataname UI-PRMD --input_type features --downsample 1 --joints 12 13 14 --device kinect --correctness incorrect --subdir positions --m 7 --s 1 --e 4
+python LLM_preprocess.py --dataname UI-PRMD --input_type features --downsample 1 --joints 12 13 14 --device kinect --correctness incorrect --subdir positions --m 7 --s 1 --e 4
 
 python3 LLM_preprocess.py --dataname UI-PRMD --input_type features --downsample 3 --joints 12 13 14 --device kinect --correctness correct --subdir positions --m 7 --s 7 --e 5
 '''
@@ -190,8 +190,8 @@ def preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, downsa
     # print(features)
     # downsample and convert to pandas dataframe
     # features_sliced = relevant_frames(features)
-    features_sliced = relevant_frames1(features, downsample_rate)
-    features_sliced = pd.DataFrame(features_sliced, columns=column_names)
+    # features_sliced = relevant_frames1(features, downsample_rate)
+    features_sliced = pd.DataFrame(features, columns=column_names)
 
     return features_sliced
 
@@ -237,13 +237,13 @@ if __name__ == '__main__':
         data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, downsample_rate)
 
     # save_dir = 'dataset/{}/{}/{}/{}_{}'.format(dataname, correctness, device, input_type, subdir)
-    save_dir = 'dataset/{}_LLM/{}/{}/{}'.format(dataname, correctness, device, input_type)
+    save_dir = 'dataset/{}_features/{}/{}/{}'.format(dataname, correctness, device, input_type)
     # print("Save directory: ", save_dir)
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
 
     # save_path = subdir + '_' + correctness + '_m{:02d}_s{:02d}_e{:02d}.npy'.format(m, s, e)
-    save_path = 'dataset/{}_LLM/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}{}_dr{:02d}_{}1'.format(dataname, correctness, device, input_type, m, s, e, cor_tag, downsample_rate, input_type)
+    save_path = 'dataset/{}_features/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}{}_dr{:02d}_{}'.format(dataname, correctness, device, input_type, m, s, e, cor_tag, downsample_rate, input_type)
     print("Save path: ", save_path)
     # np.save(save_path, data_file)
 
