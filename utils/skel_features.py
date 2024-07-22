@@ -27,6 +27,7 @@ def calculate_angle_between_vectors(v1, v2):
     return int(v1.angle_with(v2))
 
 
+# def extract_features(joint_data, dominant):
 def extract_features(joint_data):
     num_frames = joint_data.shape[0]
     features = np.zeros((num_frames, 3))  # 3 features: shoulder abduction, elbow flexion, torso inclination
@@ -36,14 +37,18 @@ def extract_features(joint_data):
         chest = Vector3D(*frame[2])  # Spine (Chest)
         waist = Vector3D(*frame[0])  # Waist
 
+        # shoulder = Vector3D(*frame[11])  # Right Collar
+        # elbow = Vector3D(*frame[12])  # Right Upper Arm 
+        # hand = Vector3D(*frame[13])  # Right Hand
 
-        shoulder = Vector3D(*frame[11])  # Right Collar (Right Shoulder)
-        elbow = Vector3D(*frame[12])  # Right Upper Arm (Right Elbow)
-        hand = Vector3D(*frame[13])  # Right Hand
+        collar = Vector3D(*frame[11])  # Right Collar
+        shoulder = Vector3D(*frame[12])  # Right upper arm (Right Shoulder)
+        elbow = Vector3D(*frame[13])  # Right forearm
+        hand = Vector3D(*frame[14])  # Right Hand
 
-        # shoulder = Vector3D(*frame[7])  # Right Collar (Right Shoulder)
-        # elbow = Vector3D(*frame[8])  # Right Upper Arm (Right Elbow)
-        # hand = Vector3D(*frame[10])  # Right Hand
+        # shoulder = Vector3D(*frame[7])  # Left Collar (Left Shoulder)
+        # elbow = Vector3D(*frame[8])  # Left Upper Arm (Left Elbow)
+        # hand = Vector3D(*frame[10])  # Left Hand
 
         # Shoulder abduction angle
         torso_to_shoulder_vector = Vector3D(
@@ -75,7 +80,13 @@ def extract_features(joint_data):
             hand.z - elbow.z
         )
 
-        elbow_flexion_angle = calculate_angle_between_vectors(shoulder_to_elbow_vector, elbow_to_hand_vector)
+        collar_to_elbow_vector = Vector3D(
+            elbow.x - collar.x,
+            elbow.y - collar.y,
+            elbow.z - collar.z
+        )
+
+        elbow_flexion_angle = calculate_angle_between_vectors(collar_to_elbow_vector, elbow_to_hand_vector)
 
         # Torso inclination angle
         vertical_vector = Vector3D(0, 1, 0)
@@ -88,7 +99,7 @@ def extract_features(joint_data):
         torso_inclination_angle = calculate_angle_between_vectors(vertical_vector, torso_vector)
 
         # features[i] = [180 - shoulder_abduction_angle, elbow_flexion_angle, torso_inclination_angle]
-        features[i] = [180 - shoulder_abduction_angle, 180 - elbow_flexion_angle, torso_inclination_angle]
+        features[i] = [180 - shoulder_abduction_angle, elbow_flexion_angle, torso_inclination_angle]
 
     return features
 
