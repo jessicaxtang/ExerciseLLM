@@ -51,25 +51,29 @@ if __name__ == '__main__':
             # for s in range(1, 11):
                 # for e in range(1, 11):
                 # load data
+            if s not in [7, 10]:
                 pos_path = 'dataset/{}/{}/{}/positions/m{:02d}_s{:02d}_e{:02d}_positions{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
                 ang_path = 'dataset/{}/{}/{}/angles/m{:02d}_s{:02d}_e{:02d}_angles{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
+
+                print("pos_path: ", pos_path)
 
                 pos_data = np.loadtxt(pos_path, delimiter=',')
                 ang_data = np.loadtxt(ang_path, delimiter=',')
 
                 num_frames = pos_data.shape[0]
 
-                data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, downsample_rate)
+                data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, downsample_rate)
 
                 # save_dir = 'dataset/{}/{}/{}/{}_{}'.format(dataname, correctness, device, input_type, subdir)
                 save_dir = 'dataset/{}_LLM/{}/{}/{}'.format(dataname, correctness, device, input_type)
-                print("Save directory: ", save_dir)
+                # print("Save directory: ", save_dir)
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
 
                 # save_path = subdir + '_' + correctness + '_m{:02d}_s{:02d}_e{:02d}.npy'.format(m, s, e)
-                save_path = 'dataset/{}_LLM/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}{}_dr{:02d}_{}'.format(dataname, correctness, device, input_type, m, s, e, cor_tag, downsample_rate, input_type)
-                # print("Save path: ", save_path)
+                # save_path = 'dataset/{}_LLM/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}{}_dr{:02d}_{}'.format(dataname, correctness, device, input_type, m, s, e, cor_tag, downsample_rate, input_type)
+                save_path = 'dataset/{}_features/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}{}_{}'.format(dataname, correctness, device, input_type, m, s, e, cor_tag, input_type)
+                print("Save path: ", save_path)
                 # np.save(save_path, data_file)
 
                 data_file.to_csv(save_path + '.csv', index=False)

@@ -17,7 +17,7 @@ import os
 import pandas as pd
 import numpy as np
 import options.option_data as option_data
-from utils.skel_features import extract_features
+from utils.skel_features import RShAbd_features, LShAbd_features
 from utils.skel_conversions import rel2abs, transform_data
 
 # run below command in terminal 
@@ -26,6 +26,8 @@ from utils.skel_conversions import rel2abs, transform_data
 python LLM_preprocess.py --dataname UI-PRMD --input_type raw --downsample 5 --joints 12 13 14 --device kinect --correctness correct --subdir positions --m 7 --s 1 --e 1
 
 python3 LLM_preprocess.py --dataname UI-PRMD --input_type features --downsample 1 --joints 12 13 14 --device kinect --correctness incorrect --subdir positions --m 7 --s 1 --e 4
+
+python3 LLM_preprocess.py --dataname UI-PRMD --input_type features --downsample 3 --joints 12 13 14 --device kinect --correctness correct --subdir positions --m 7 --s 7 --e 5
 '''
 
 # order of joint connections
@@ -41,21 +43,32 @@ def relevant_frames(features, downsample_rate):
     indices = []
 
     frame_max = np.argmax(features, axis=0) # indices with max shoulder abduction angle
+    frame_max = frame_max[frame_max != 0]
     frame_max = np.sort(frame_max).tolist()
     indices.extend(frame_max)
+    # print("frame_max: ", frame_max)
 
     # min features BEFORE first max angles
+    # print("features[frame_max[0]]", features[frame_max[0]])
+    # print("features[frame_max[1]]", features[frame_max[1]])
+    # print("features[frame_max[2]]", features[frame_max[2]])
     frame_min = np.argmin(features[:frame_max[0]], axis=0) # indices with min shoulder abduction angle
+    frame_min = frame_min[frame_min != 0]
     frame_min = np.sort(frame_min).tolist()
     indices.extend(frame_min)
+    # print("frame_min BEFORE: ", frame_min)
 
     # min features AFTER last max angles
-    frame_min = np.argmin(features[frame_max[-1]:], axis=0) # indices with min shoulder abduction angle
+    # print("features[frame_max[-1]+1:]", features[frame_max[-1]+1:])
+    frame_min = np.argmin(features[frame_max[-1]+1:], axis=0) # indices with min shoulder abduction angle
+    frame_min = frame_min[frame_min != 0]
     frame_min += frame_max[-1]
     frame_min = np.sort(frame_min).tolist()
     indices.extend(frame_min)
+    # print("frame_min AFTER: ", frame_min)
 
     indices = sorted(indices)
+
     # print("sorted indices: ", indices)
     # print("type(indices): ", type(indices))
 
@@ -109,7 +122,7 @@ def preprocess_raw_joints(data_file, downsample_rate):
 
     return df_sliced
 
-def preprocess_features(pos_data, ang_data, num_kp, num_axes, downsample_rate):
+def preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, downsample_rate):
     p_data = transform_data(pos_data, num_kp, num_axes)
     a_data = transform_data(ang_data, num_kp, num_axes)
 
@@ -120,14 +133,16 @@ def preprocess_features(pos_data, ang_data, num_kp, num_axes, downsample_rate):
     
     new = np.transpose(skel, (2, 0, 1))
 
-    features = np.array(extract_features(new), dtype=int)
+    features = np.array(RShAbd_features(new), dtype=int) # switch out function for feature/dominant side
     column_names = ['Shoulder Abduction Angle', 'Elbow Flexion Angle', 'Torso Inclination Angle']
-
+    # print(features)
     # downsample and convert to pandas dataframe
-    features_sliced = relevant_frames(features, downsample_rate)
-    features_sliced = pd.DataFrame(features_sliced, columns=column_names)
+    # features_sliced = relevant_frames(features, downsample_rate)
+    # features_sliced = pd.DataFrame(features_sliced, columns=column_names)
+    features_sliced = pd.DataFrame(features, columns=column_names) # not actually sliced lmao
 
     return features_sliced
+
 
 if __name__ == '__main__':
 
@@ -161,13 +176,13 @@ if __name__ == '__main__':
     ang_data = np.loadtxt(ang_path, delimiter=',')
 
     num_frames = pos_data.shape[0] # pos and ang data should have the same number of frames
-
+    print("NUM_FRAMES:", num_frames)
     data_file = 0
     if input_type == 'raw':
         data_file = preprocess_raw_joints(pos_data, downsample_rate)
         # TO FIX: i think the data is wrong
     elif input_type == 'features':
-        data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, downsample_rate)
+        data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, downsample_rate)
 
     # save_dir = 'dataset/{}/{}/{}/{}_{}'.format(dataname, correctness, device, input_type, subdir)
     save_dir = 'dataset/{}_LLM/{}/{}/{}'.format(dataname, correctness, device, input_type)
