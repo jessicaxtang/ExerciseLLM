@@ -51,7 +51,8 @@ if __name__ == '__main__':
             # for s in range(1, 11):
                 # for e in range(1, 11):
                 # load data
-            if s not in [7, 10]:
+            if s not in [7, 10]: # right
+            # if s in [7, 10]: # left
                 pos_path = 'dataset/{}/{}/{}/positions/m{:02d}_s{:02d}_e{:02d}_positions{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
                 ang_path = 'dataset/{}/{}/{}/angles/m{:02d}_s{:02d}_e{:02d}_angles{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
 
@@ -65,7 +66,7 @@ if __name__ == '__main__':
                 data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, downsample_rate)
 
                 # save_dir = 'dataset/{}/{}/{}/{}_{}'.format(dataname, correctness, device, input_type, subdir)
-                save_dir = 'dataset/{}_LLM/{}/{}/{}'.format(dataname, correctness, device, input_type)
+                save_dir = 'dataset/{}_features/{}/{}/{}'.format(dataname, correctness, device, input_type)
                 # print("Save directory: ", save_dir)
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
