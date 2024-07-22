@@ -36,10 +36,9 @@ def RShAbd_features(joint_data): # right standing shoulder abduction
         chest = Vector3D(*frame[2])  # Spine (Chest)
         waist = Vector3D(*frame[0])  # Waist
 
-        collar = Vector3D(*frame[11])  # Right Collar)
-        shoulder = Vector3D(*frame[12])  # Right Upper Arm (Right Shoulder)
-        elbow = Vector3D(*frame[13])  # Right Forearm (Right Elbow)
-        hand = Vector3D(*frame[14])  # Right Hand
+        shoulder = Vector3D(*frame[11])  # Right Collar (Right Shoulder)
+        elbow = Vector3D(*frame[12])  # Right Upper Arm (Right Elbow)
+        hand = Vector3D(*frame[13])  # Right Hand
 
         # Shoulder abduction angle
         torso_to_shoulder_vector = Vector3D(
@@ -102,10 +101,9 @@ def LShAbd_features(joint_data): # left standing shoulder abduction
         chest = Vector3D(*frame[2])  # Spine (Chest)
         waist = Vector3D(*frame[0])  # Waist
 
-        collar = Vector3D(*frame[7])  # Left Collar)
-        shoulder = Vector3D(*frame[8])  # Left Upper Arm (Left Shoulder)
-        elbow = Vector3D(*frame[9])  # Left Forearm (Left Elbow)
-        hand = Vector3D(*frame[10])  # Left Hand
+        shoulder = Vector3D(*frame[7])  # Left Upper Arm (Left Shoulder)
+        elbow = Vector3D(*frame[8])  # Left Forearm (Left Elbow)
+        hand = Vector3D(*frame[9])  # Left Hand
 
         # Shoulder abduction angle
         torso_to_shoulder_vector = Vector3D(
