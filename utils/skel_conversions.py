@@ -55,32 +55,33 @@ def rel2abs(p, a, num_kp, num_axes, num_frames):
         22 Right leg toes
         """
 
+        # extract joint pos and angles for current frame
         joint = p[:, :, i]
         joint_ang = a[:, :, i]
 
         # chest, neck, head
-        rot = eulers_2_rot_matrix(joint_ang[0, :] * np.pi / 180)
-        for j in range(1, 6):
+        rot = eulers_2_rot_matrix(joint_ang[0, :] * np.pi / 180) # initialize waist rotation matrix
+        for j in range(1, 6): # spine to head tip
             rot = rot @ eulers_2_rot_matrix(joint_ang[j, :] * np.pi / 180)
             joint[j, :] = rot @ joint[j, :] + joint[j - 1, :]
 
         # left-arm
-        rot = eulers_2_rot_matrix(joint_ang[2, :] * np.pi / 180)
-        joint[6, :] = rot @ joint[6, :] + joint[2, :]
+        rot = eulers_2_rot_matrix(joint_ang[2, :] * np.pi / 180) 
+        joint[6, :] = rot @ joint[6, :] + joint[2, :] # left collar rotation matrix
         for j in range(7, 10):
             rot = rot @ eulers_2_rot_matrix(joint_ang[j - 1, :] * np.pi / 180)
             joint[j, :] = rot @ joint[j, :] + joint[j - 1, :]
 
         # right-arm
         rot = eulers_2_rot_matrix(joint_ang[2, :] * np.pi / 180)
-        joint[10, :] = rot @ joint[10, :] + joint[2, :]
+        joint[10, :] = rot @ joint[10, :] + joint[2, :] # right collar rotation matrix
         for j in range(11, 14):
             rot = rot @ eulers_2_rot_matrix(joint_ang[j - 1, :] * np.pi / 180)
             joint[j, :] = rot @ joint[j, :] + joint[j - 1, :]
 
         # left-leg
         rot = eulers_2_rot_matrix(joint_ang[0, :] * np.pi / 180)
-        joint[14, :] = rot @ joint[14, :] + joint[0, :]
+        joint[14, :] = rot @ joint[14, :] + joint[0, :] # left upper leg rotation matrix
         for j in range(15, 18):
             rot = rot @ eulers_2_rot_matrix(joint_ang[j - 1, :] * np.pi / 180)
             joint[j, :] = rot @ joint[j, :] + joint[j - 1, :]
