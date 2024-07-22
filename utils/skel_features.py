@@ -137,7 +137,13 @@ def LShAbd_features(joint_data): # left standing shoulder abduction
             hand.z - elbow.z
         )
 
-        elbow_flexion_angle = calculate_angle_between_vectors(shoulder_to_elbow_vector, elbow_to_hand_vector)
+        collar_to_elbow_vector = Vector3D(
+            elbow.x - collar.x,
+            elbow.y - collar.y,
+            elbow.z - collar.z
+        )
+
+        elbow_flexion_angle = calculate_angle_between_vectors(collar_to_elbow_vector, elbow_to_hand_vector)
 
         # Torso inclination angle
         vertical_vector = Vector3D(0, 1, 0)

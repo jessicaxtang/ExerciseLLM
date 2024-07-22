@@ -34,7 +34,7 @@ python3 LLM_preprocess.py --dataname UI-PRMD --input_type features --downsample 
 J = np.array([[3, 5, 4, 2, 1, 2, 6, 7, 8, 2, 10, 11, 12, 0, 14, 15, 16, 0, 18, 19, 20],
               [2, 4, 2, 1, 0, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21]])
 
-def relevant_frames(features, downsample_rate):
+def relevant_frames(features):
     '''
     features: a numpy array of features extracted from the data
     downsample_rate: int
@@ -65,10 +65,62 @@ def relevant_frames(features, downsample_rate):
     frame_min += frame_max[-1]
     frame_min = np.sort(frame_min).tolist()
     indices.extend(frame_min)
-    # print("frame_min AFTER: ", frame_min)
+
+
 
     indices = sorted(indices)
 
+    # print("sorted indices: ", indices)
+    # print("type(indices): ", type(indices))
+
+    features_sliced = features[indices]
+    # print("features_sliced", features_sliced)
+
+    return features_sliced
+
+def relevant_frames1(features, downsample_rate):
+
+    indices = []
+
+    frame_max = np.argmax(features, axis=0) # indices with max shoulder abduction angle
+    frame_max = np.sort(frame_max).tolist()
+    indices.extend(frame_max)
+
+    # min features BEFORE first max angles
+    before = list(range(0, frame_max[0], downsample_rate))
+    indices.extend(before)
+
+    # min features AFTER last max angles
+    after = list(range(frame_max[-1], features.shape[0], downsample_rate))
+    indices.extend(after)
+
+    indices = sorted(indices)
+
+    # print("sorted indices: ", indices)
+    # print("type(indices): ", type(indices))
+
+    features_sliced = features[indices]
+    # print("features_sliced", features_sliced)
+
+    return features_sliced
+
+def relevant_frames1(features, downsample_rate):
+
+    indices = []
+
+    frame_max = np.argmax(features, axis=0) # indices with max shoulder abduction angle
+    frame_max = np.sort(frame_max).tolist()
+    indices.extend(frame_max)
+
+    # min features BEFORE first max angles
+    before = list(range(0, frame_max[0], downsample_rate))
+    indices.extend(before)
+
+    # min features AFTER last max angles
+    after = list(range(frame_max[-1], features.shape[0], downsample_rate))
+    indices.extend(after)
+
+    indices = sorted(indices)
     # print("sorted indices: ", indices)
     # print("type(indices): ", type(indices))
 
@@ -137,9 +189,9 @@ def preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, downsa
     column_names = ['Shoulder Abduction Angle', 'Elbow Flexion Angle', 'Torso Inclination Angle']
     # print(features)
     # downsample and convert to pandas dataframe
-    # features_sliced = relevant_frames(features, downsample_rate)
-    # features_sliced = pd.DataFrame(features_sliced, columns=column_names)
-    features_sliced = pd.DataFrame(features, columns=column_names) # not actually sliced lmao
+    # features_sliced = relevant_frames(features)
+    features_sliced = relevant_frames1(features, downsample_rate)
+    features_sliced = pd.DataFrame(features_sliced, columns=column_names)
 
     return features_sliced
 
@@ -191,7 +243,7 @@ if __name__ == '__main__':
         os.makedirs(save_dir)
 
     # save_path = subdir + '_' + correctness + '_m{:02d}_s{:02d}_e{:02d}.npy'.format(m, s, e)
-    save_path = 'dataset/{}_LLM/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}{}_dr{:02d}_{}'.format(dataname, correctness, device, input_type, m, s, e, cor_tag, downsample_rate, input_type)
+    save_path = 'dataset/{}_LLM/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}{}_dr{:02d}_{}1'.format(dataname, correctness, device, input_type, m, s, e, cor_tag, downsample_rate, input_type)
     print("Save path: ", save_path)
     # np.save(save_path, data_file)
 
