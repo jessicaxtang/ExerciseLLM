@@ -174,7 +174,7 @@ def preprocess_raw_joints(data_file, downsample_rate):
 
     return df_sliced
 
-def preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, downsample_rate):
+def preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, dominant_side):
     p_data = transform_data(pos_data, num_kp, num_axes)
     a_data = transform_data(ang_data, num_kp, num_axes)
 
@@ -184,8 +184,10 @@ def preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, downsa
     skel = rel2abs(p, a, num_kp, num_axes, num_frames)
     
     new = np.transpose(skel, (2, 0, 1))
-
-    features = np.array(RShAbd_features(new), dtype=int) # switch out function for feature/dominant side
+    if dominant_side == 'right':
+        features = np.array(RShAbd_features(new), dtype=int)
+    else: # 'left'
+        features = np.array(LShAbd_features(new), dtype=int)
     column_names = ['Shoulder Abduction Angle', 'Elbow Flexion Angle', 'Torso Inclination Angle']
     # print(features)
     # downsample and convert to pandas dataframe

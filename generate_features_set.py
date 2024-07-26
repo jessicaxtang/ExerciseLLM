@@ -38,7 +38,7 @@ if __name__ == '__main__':
     subdir = 'positions'
     m = 7
     s = 1
-    e = 5
+    e = 2
 
     num_kp = 22 # turn into a parameter
     num_axes = 3 # turn into a parameter
@@ -47,12 +47,9 @@ if __name__ == '__main__':
     for correctness in ['correct', 'incorrect']:
         if correctness == 'incorrect':
             cor_tag = '_inc'
-        for s in range(1, 11): # m
-            # for s in range(1, 11):
-                # for e in range(1, 11):
+        for s in range(1, 11):
+            for e in range(1, 11):
                 # load data
-            if s not in [7, 10]: # right
-            # if s in [7, 10]: # left
                 pos_path = 'dataset/{}/{}/{}/positions/m{:02d}_s{:02d}_e{:02d}_positions{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
                 ang_path = 'dataset/{}/{}/{}/angles/m{:02d}_s{:02d}_e{:02d}_angles{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
 
@@ -63,7 +60,10 @@ if __name__ == '__main__':
 
                 num_frames = pos_data.shape[0]
 
-                data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, downsample_rate)
+                if s not in [7, 10]: # right
+                    data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, 'right')
+                else: # if s in [7, 10]: # left
+                    data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, 'left')
 
                 # save_dir = 'dataset/{}/{}/{}/{}_{}'.format(dataname, correctness, device, input_type, subdir)
                 save_dir = 'dataset/{}_features/{}/{}/{}'.format(dataname, correctness, device, input_type)
