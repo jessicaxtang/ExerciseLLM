@@ -22,6 +22,7 @@ def generate_filenames(num_demos, m, s, e):
     note: specify the correctness of the files in the create_prompt() function
     '''
     filenames = []
+    # TO DO: fix that RANDINT WORKS
     for i in range(num_demos):
         if m == None:
             m = randint(1, 10)
@@ -109,7 +110,7 @@ if __name__ == '__main__':
     
     for test_num in range(1, 1+num_test_files):
             test_files = generate_filenames(num_tests, m, s, e)
-            # make sure test files are different from demo files
+            # TO DO: make sure test files are different from demo files
 
             print("test files: ", test_files)
             create_prompt(test_files, save_dir_txt, dataname, input_type, device, correctness, exp_num, 'test', test_num, num_tests)
