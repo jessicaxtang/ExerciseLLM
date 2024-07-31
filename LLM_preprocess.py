@@ -182,6 +182,8 @@ def preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, domina
     a = np.copy(a_data)
 
     skel = rel2abs(p, a, num_kp, num_axes, num_frames)
+    # print("skel.shape: ", skel.shape)
+    # print(skel)
     
     new = np.transpose(skel, (2, 0, 1))
     if dominant_side == 'right':

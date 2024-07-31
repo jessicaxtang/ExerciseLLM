@@ -1,5 +1,7 @@
 import csv
 import os
+import argparse
+import pandas as pd
 from random import randint
 
 def read_csv(csv_file_path):
@@ -74,34 +76,81 @@ def create_prompt(filenames, save_dir_txt, dataname, input_type, device, correct
         ex_num += 1
         append_to_txt(log_path_txt, file, newline_after=True) # write file name to log file
 
+def initialize_dataframe(input_type, m, s, e, k):
+    df = pd.DataFrame({'input_type': 20*[input_type]})
+    if m == 0:
+        df['movement'] = list(range(1, 11)) + list(range(1, 11))
+    else:
+        df['movement'] = 20*[m]
+
+    if s == 0:
+        df['subject'] = list(range(1, 11)) + list(range(1, 11))
+    else:
+        df['subject'] = 20*[s]
+
+    if e == 0:
+        df['episode'] = list(range(1, 11)) + list(range(1, 11))
+    else:
+        df['episode'] = 20*[e]
+
+    df['correctness'] = 10*[1] + 10*[0]
+
+    df = df.sample(frac=1) # shuffle order of rows
+    # ensure half of the first k rows contain correctness = 1, random sampling won't work
+
+    df.insert(0, 'sample', list(range(1, 21))) # add sample number column
+
+    df['sample_type'] = k*['demo'] + (20-k)*['test']
+
+    return df
+
+'''
+TERMINAL RUN COMMAND:
+python prompt_creator.py --dataname UI-PRMD --device kinect --exp_num 1 --k 0 --input_type pos --m 7 --s 0 --e 1
+
+'''
 if __name__ == '__main__':
     # define default parameters 
-    # TO DO: turn these into command line arguments
-    dataname = 'UI-PRMD'
-    input_type = 'features'
-    downsample_rate = 3
-    device = 'kinect'
-    correctness = 'correct'
-    cor_tag = ''
+    parser = argparse.ArgumentParser("Create .txt prompts for LLM experiments")
+    parser.add_argument('--dataname', type=str, default='UI-PRMD', help='name of dataset')
+    parser.add_argument('--device', type=str, default='kinect', help='device used to capture data')
+    parser.add_argument('--exp_num', type=int, default=1, help='experiment number')
+    parser.add_argument('--k', type=int, default=0, help='k value for number of demos')
+    parser.add_argument('--input_type', type=str, default='feat', help='type of input data: pos, feat, or cot')
+    parser.add_argument('--m', type=int, default=7, help='if 0, generate random value. if 1-10, use const value')
+    parser.add_argument('--s', type=int, default=1, help='if 0, generate random value. if 1-10, use const value')
+    parser.add_argument('--e', type=int, default=None, help='if 0, generate random value. if 1-10, use const value')
 
-    # None for random value
-    m = 7
-    s = 1
-    e = None
-    k = 0 # value for k-shot prompting
-    num_demos = 2 # number of examples to include in each demo prompt
-    num_demo_files = 1 # number of demo prompts to create per correctness
-    num_tests = 10 - num_demos # number of examples to include in each test prompt
-    num_test_files = 2 # number of test prompts to create
-    exp_num = 1
+    args = parser.parse_args()
+    dataname = args.dataname
+    device = args.device # don't need now, but to keep it generalizable for future
+    exp_num = args.exp_num
+    k = args.k
+    input_type = args.input_type
+    m = args.m
+    s = args.s
+    e = args.e
+
+    num_tests = 20 - k # number of examples to include in each test prompt
     exp_name = str(k) + "-shot-" + input_type
+    if m != 0: 
+        exp_name += f"_m{m:02d}"
+    if s != 0:
+        exp_name += f"_s{s:02d}"
+    if e != 0:
+        exp_name += f"_e{e:02d}"
 
     demo_count, test_count = 0, 0
 
-    save_dir_txt = f'dataset/{dataname}_prompts/{exp_num}_{exp_name}/{device}/{input_type}'
+    save_dir_txt = f'dataset/{dataname}_prompts/{exp_num}_{exp_name}'
     if not os.path.exists(save_dir_txt):
         os.makedirs(save_dir_txt)
 
+    # initialize dataframe to store experiment file information
+    df = initialize_dataframe(input_type, m, s, e, k)    
+    print(df)
+
+"""
     # generate demo prompts (labelled)
     for correctness in ['correct', 'incorrect']:
         for demo_num in range(1, 1+num_demo_files):
@@ -121,3 +170,4 @@ if __name__ == '__main__':
     print("num demo files saved:\t", demo_count)
     print("num test files saved:\t", test_count)
     print("TOTAL num files saved:\t", demo_count + test_count)
+"""
