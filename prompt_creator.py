@@ -10,121 +10,161 @@ def read_csv(csv_file_path):
         csv_content = [row for row in csv_reader]
     return csv_content
 
+def write_to_txt(txt_file_path, text, newline_after=False):
+    with open(txt_file_path, mode='w', encoding='utf-8') as txt_file:
+        if newline_after:
+            txt_file.write(text + '\n')
+        else:
+            txt_file.write(text)
+
 def append_to_txt(txt_file_path, text, newline_after=False):
     with open(txt_file_path, mode='a', encoding='utf-8') as txt_file:
         if newline_after:
             txt_file.write(text + '\n')
         else:
             txt_file.write(text)
-            
-def generate_filenames(num_demos, m, s, e):
-    '''
-    if m, s, or e is None, generate random values for them
-    returns a list of strings of file names in the format 'mXX_sXX_eXX'
-    note: specify the correctness of the files in the create_prompt() function
-    '''
-    filenames = []
-    # TO DO: fix that RANDINT WORKS
-    for i in range(num_demos):
-        if m == None:
-            m = randint(1, 10)
-        if s == None:
-            s = randint(1, 10)
-        if e == None:
-            e = randint(1, 10)
-        filenames.append(f'm{m:02d}_s{s:02d}_e{e:02d}')
-    return filenames
 
-def create_prompt(filenames, save_dir_txt, dataname, input_type, device, correctness, exp_num, file_type, file_num, num_files):
-    '''
-    filenames: list of strings of file names in the format 'mXX_sXX_eXX'
-    exp_num: experiment number
-    file_type: 'demo' or 'test'
-    file_num: file number of file_type
-    num_files: total number of files to generate of file_type
-    '''
-    cor_tag = ''
-    if correctness == 'incorrect':
-        cor_tag = '_inc'
-
-    save_path_txt = save_dir_txt + f'/exp{exp_num}_{file_type}{file_num}{cor_tag}.txt'
-    log_path_txt = save_dir_txt + f'/exp{exp_num}_{file_type}{file_num}{cor_tag}_log.txt'
-    ex_num = 1 + ((file_num-1)*num_files)
-
-    
-    for file in filenames:
-        # print("CURRENT FILE: ", file)
-        csv_file_path = f'dataset/{dataname}_features/{correctness}/{device}/{input_type}/{file}{cor_tag}_{input_type}.csv'
-        if file_type == 'demo':
-            header = f'# {correctness} example {ex_num}'
-            append_to_txt(log_path_txt, correctness + '\t', newline_after=False)
-        else:
-            header = f'# unlabelled example {ex_num}'
-            correctness_rand = 'correct' if randint(0, 1) == 1 else 'incorrect' # generate random correctness per test example
-            print("correctness_rand: ", correctness_rand)
-            if correctness_rand == 'correct':
-                cor_tag = ''
-            else:
-                cor_tag = '_inc'
-            csv_file_path = f'dataset/{dataname}_features/{correctness_rand}/{device}/{input_type}/{file}{cor_tag}_{input_type}.csv'
-            append_to_txt(log_path_txt, correctness_rand + '\t', newline_after=False)
-
-        data = read_csv(csv_file_path)
-        append_to_txt(save_path_txt, header, newline_after=True) # write header to prompt file
-        for row in data:
-            append_to_txt(save_path_txt, ','.join(row)+ '\n') # write data to prompt file
-        ex_num += 1
-        append_to_txt(log_path_txt, file, newline_after=True) # write file name to log file
-
-def initialize_dataframe(input_type, m, s, e, k):
-    df = pd.DataFrame({'input_type': 20*[input_type]})
+def create_dataframe(input_type, m, s, e, correctness):
+    df = pd.DataFrame({'input_type': 10*[input_type]})
     if m == 0:
-        df['movement'] = list(range(1, 11)) + list(range(1, 11))
+        df['movement'] = list(range(1, 11))
     else:
-        df['movement'] = 20*[m]
+        df['movement'] = 10*[m]
 
     if s == 0:
-        df['subject'] = list(range(1, 11)) + list(range(1, 11))
+        df['subject'] = list(range(1, 11))
     else:
-        df['subject'] = 20*[s]
+        df['subject'] = 10*[s]
 
     if e == 0:
-        df['episode'] = list(range(1, 11)) + list(range(1, 11))
+        df['episode'] = list(range(1, 11))
     else:
-        df['episode'] = 20*[e]
+        df['episode'] = 10*[e]
 
-    df['correctness'] = 10*[1] + 10*[0]
-
-    df = df.sample(frac=1) # shuffle order of rows
-    # ensure half of the first k rows contain correctness = 1, random sampling won't work
-
-    df.insert(0, 'sample', list(range(1, 21))) # add sample number column
-
-    df['sample_type'] = k*['demo'] + (20-k)*['test']
+    if correctness == 'correct':
+        df['correctness'] = 10*[1]
+    else:
+        df['correctness'] = 10*[0]
 
     return df
 
-'''
-TERMINAL RUN COMMAND:
-python prompt_creator.py --dataname UI-PRMD --device kinect --exp_num 1 --k 0 --input_type pos --m 7 --s 0 --e 1
+def initialize_dataframe(input_type, m, s, e, k):
+
+    # create separate dataframes for correct and incorrect examples
+    df_cor = create_dataframe(input_type, m, s, e, 'correct')
+    df_inc = create_dataframe(input_type, m, s, e, 'incorrect')
+
+    # shuffle each dataframe to randomize demo samples
+    df_cor = df_cor.sample(frac=1)
+    df_inc = df_inc.sample(frac=1)
+
+    # ensure demo sampled is balanced between labels
+    k_cor = k // 2 # rounds down if k is odd
+    k_inc = k - k_cor
+    df_cor['sample_type'] = k_cor*['demo'] + (10-k_cor)*['test']
+    df_inc['sample_type'] = k_inc*['demo'] + (10-k_inc)*['test']
+    df = pd.concat([df_cor, df_inc], ignore_index=True)
+    
+    # shuffle sample order to mix cor/inc test samples
+    df = df.sample(frac=1)
+    df.sort_values('sample_type', ignore_index=True, inplace=True)
+
+    # generate file names for ease of access
+    cor_tag = ''
+    df['file'] = df.apply(lambda row: f'm{row["movement"]:02d}_s{row["subject"]:02d}_e{row["episode"]:02d}', axis=1)
+    df['file'] = df['file'] + df['correctness'].apply(lambda x: cor_tag if x == 1 else '_inc')
+
+    return df
+
+def create_prompts_pos(df, total, k, save_dir_txt, dataname, device):
+    # create LLM prompt 1 with k demos
+    save_path1_txt = save_dir_txt + f'/{k}_demos-1_test.txt'
+    out_format = "Desired output format: \"{Label}\""
+    instructions = "Instructions: Identify the label (“correct” or “incorrect”) for the data sample below containing sequences of xyz positions of 22 body joints extracted from Kinect data of standing shoulder abduction exercise. Ensure the output adheres to the format provided." 
+    write_to_txt(save_path1_txt, out_format, newline_after=True)
+    append_to_txt(save_path1_txt, instructions, newline_after=True)
+
+    i = 0
+    while i < k: # for each demo
+        data_start = f"Data {i+1}: '''"
+        append_to_txt(save_path1_txt, data_start, newline_after=True)
+        file = df.loc[i, 'file']
+        correctness = 'correct' if df.loc[i, 'correctness'] == 1 else 'incorrect'
+        print("DEMO FILE: ", file)
+
+        csv_file_path = f'dataset/{dataname}_positions/{correctness}/{device}/positions/{file}_positions.csv'
+        data = read_csv(csv_file_path)
+        for row in data:
+            append_to_txt(save_path1_txt, ','.join(row)+ '\n')
+
+        data_end = f"'''\nLabel {i+1}: {correctness} "
+        append_to_txt(save_path1_txt, data_end + '\n', newline_after=True)
+
+        i += 1
+    # adding one test sample to the end of demos
+    data_start = f"Data {i+1}: '''"
+    append_to_txt(save_path1_txt, data_start, newline_after=True)
+    file = df.loc[i, 'file']
+    correctness = 'correct' if df.loc[i, 'correctness'] == 1 else 'incorrect'
+    print("--------TEST FILE: ", file)
+
+    csv_file_path = f'dataset/{dataname}_positions/{correctness}/{device}/positions/{file}_positions.csv'
+    data = read_csv(csv_file_path)
+    for row in data:
+        append_to_txt(save_path1_txt, ','.join(row)+ '\n')
+
+    data_end = f"'''\nLabel {i+1}: "
+    append_to_txt(save_path1_txt, data_end + '\n', newline_after=True)
+    i += 1
+    print("file saved as: ", save_path1_txt)
+
+    # create LLM prompt 2 with test examples
+    save_path2_txt = save_dir_txt + f'/{total-i}_tests.txt'
+    out_format = "Desired output format: \"{Label}\""
+    instructions = f"Instructions: Here are {total-i} more samples (unlabelled), please maintain the desired output format, returning each label on a new line." 
+    write_to_txt(save_path2_txt, out_format, newline_after=True)
+    append_to_txt(save_path2_txt, instructions, newline_after=True)
+
+    while i < total: # for each remaining test
+        data_start = f"Data {i+1}: '''"
+        append_to_txt(save_path2_txt, data_start, newline_after=True)
+        file = df.loc[i, 'file']
+        correctness = 'correct' if df.loc[i, 'correctness'] == 1 else 'incorrect'
+        print("TEST FILE: ", file)
+
+        csv_file_path = f'dataset/{dataname}_positions/{correctness}/{device}/positions/{file}_positions.csv'
+        data = read_csv(csv_file_path)
+        for row in data:
+            append_to_txt(save_path2_txt, ','.join(row)+ '\n')
+
+        data_end = f"'''\nLabel {i+1}: "
+        append_to_txt(save_path2_txt, data_end + '\n', newline_after=True)
+        i += 1
+    print("file saved as: ", save_path2_txt)
 
 '''
+TERMINAL RUN COMMAND:
+python prompt_creator.py --dataname UI-PRMD --device kinect --exp_num 1 --total 20 --k 0 --input_type pos --m 7 --s 0 --e 1
+'''
+
 if __name__ == '__main__':
     # define default parameters 
     parser = argparse.ArgumentParser("Create .txt prompts for LLM experiments")
     parser.add_argument('--dataname', type=str, default='UI-PRMD', help='name of dataset')
     parser.add_argument('--device', type=str, default='kinect', help='device used to capture data')
     parser.add_argument('--exp_num', type=int, default=1, help='experiment number')
+    parser.add_argument('--total', type=int, default=20, help='total number of samples in entire experiment')
     parser.add_argument('--k', type=int, default=0, help='k value for number of demos')
     parser.add_argument('--input_type', type=str, default='feat', help='type of input data: pos, feat, or cot')
     parser.add_argument('--m', type=int, default=7, help='if 0, generate random value. if 1-10, use const value')
     parser.add_argument('--s', type=int, default=1, help='if 0, generate random value. if 1-10, use const value')
-    parser.add_argument('--e', type=int, default=None, help='if 0, generate random value. if 1-10, use const value')
+    parser.add_argument('--e', type=int, default=0, help='if 0, generate random value. if 1-10, use const value')
 
     args = parser.parse_args()
     dataname = args.dataname
     device = args.device # don't need now, but to keep it generalizable for future
     exp_num = args.exp_num
+    total = args.total
     k = args.k
     input_type = args.input_type
     m = args.m
@@ -142,7 +182,8 @@ if __name__ == '__main__':
 
     demo_count, test_count = 0, 0
 
-    save_dir_txt = f'dataset/{dataname}_prompts/{exp_num}_{exp_name}'
+    # save_dir_txt = f'dataset/{dataname}_prompts/{exp_num}_{exp_name}'
+    save_dir_txt = f'dataset/{dataname}_prompts/{exp_name}'
     if not os.path.exists(save_dir_txt):
         os.makedirs(save_dir_txt)
 
@@ -150,24 +191,5 @@ if __name__ == '__main__':
     df = initialize_dataframe(input_type, m, s, e, k)    
     print(df)
 
-"""
-    # generate demo prompts (labelled)
-    for correctness in ['correct', 'incorrect']:
-        for demo_num in range(1, 1+num_demo_files):
-            demo_files = generate_filenames(num_demos, m, s, e)
-            print("demo files: ", demo_files)
-            create_prompt(demo_files, save_dir_txt, dataname, input_type, device, correctness, exp_num, 'demo', demo_num, num_demos)
-            demo_count += 1
-    
-    for test_num in range(1, 1+num_test_files):
-            test_files = generate_filenames(num_tests, m, s, e)
-            # TO DO: make sure test files are different from demo files
-
-            print("test files: ", test_files)
-            create_prompt(test_files, save_dir_txt, dataname, input_type, device, correctness, exp_num, 'test', test_num, num_tests)
-            test_count += 1
-
-    print("num demo files saved:\t", demo_count)
-    print("num test files saved:\t", test_count)
-    print("TOTAL num files saved:\t", demo_count + test_count)
-"""
+    if input_type == 'pos':
+        create_prompts_pos(df, total, k, save_dir_txt, dataname, device)

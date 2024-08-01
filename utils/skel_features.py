@@ -34,12 +34,12 @@ def RShAbd_features(joint_data): # right standing shoulder abduction
     for i in range(num_frames):
         frame = joint_data[i]
 
-        chest = Vector3D(*frame[3])  # Neck
+        chest = Vector3D(*frame[2])  # Spine (Chest)
         waist = Vector3D(*frame[0])  # Waist
 
-        shoulder = Vector3D(*frame[11])  # Right Collar (Right Shoulder)
-        elbow = Vector3D(*frame[12])  # Right Upper Arm (Right Elbow)
-        hand = Vector3D(*frame[13])  # Right Hand
+        shoulder = Vector3D(*frame[11])  # 12. Right Upper Arm (Right Shoulder)
+        elbow = Vector3D(*frame[12])  # 13. Right ForeArm (Right Elbow)
+        hand = Vector3D(*frame[13])  # 14. Right Hand
 
         # Shoulder abduction angle
         torso_to_shoulder_vector = Vector3D(
