@@ -1,5 +1,5 @@
 # ExerciseLLM
-Pytorch implementation of paper "insert_paper_name"
+Python code and dataset repository for paper "insert_paper_name"
 KITE Research Institute 2024
 
 [[Project Page]](insert_link) [[Paper]](insert_link) 
@@ -13,11 +13,9 @@ KITE Research Institute 2024
 ## Table of Content
 * [1. Results](#1-results)
 * [2. Installation](#2-installation)
-* [3. Train](#4-train)
-* [4. Evaluation](#5-evaluation)
-* [5. Visualization](#6-visualization)
-* [6. Acknowledgements](#7-acknowledgements)
-
+* [3. Datasets](#3-datasets)
+* [4. Evaluation](#4-evaluation)
+* [5. Acknowledgements](#5-acknowledgements)
 
 
 ## 1. Results 
@@ -33,10 +31,8 @@ conda env create -f environment.yml
 conda activate exerLLM
 ```
 
-### 2.2. Dependencies
-??
 
-### 2.3. Datasets
+## 3. Datasets
 (list links and download and sample file directory tree)
 
 UI-PRMD: 
@@ -57,20 +53,14 @@ UI-PRMD:
 └── UI-PRMD_visualization.ipynb
 ```
 
-### 2.4. Motion & text feature extractors:
-??
-
-### 2.5. Pre-trained models 
-??
-
-## 3. Train
-??
-
-### 3.1. VQ-VAE 
-
-
+### 3.1. Preparation files
+Position to absolute coordinates: 
+Feature extractors:
 
 ## 4. Evaluation 
+Automatic prompt generation:
+
+
 
 ## 5. Visualization
 Visualize UI-PRMD movements by running `visualization/UI-PRMD_visualization.ipynb`
