@@ -54,8 +54,8 @@ UI-PRMD:
 ```
 
 ### 3.1. Preparation files
-Position to absolute coordinates: 
-Feature extractors:
+Position to absolute coordinates: `generate_positions_abs.py`
+Feature extractors: `generate_features_set.py`
 
 ## 4. Evaluation 
 Automatic prompt generation:
