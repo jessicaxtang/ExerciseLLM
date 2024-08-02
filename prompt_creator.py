@@ -61,8 +61,8 @@ def initialize_dataframe(input_type, m, s, e, k):
     # ensure demo sampled is balanced between labels
     k_cor = k // 2 # rounds down if k is odd
     k_inc = k - k_cor
-    df_cor['sample_type'] = k_cor*['demo'] + (10-k_cor)*['test']
-    df_inc['sample_type'] = k_inc*['demo'] + (10-k_inc)*['test']
+    df_cor.insert(4, 'sample_type', k_cor*['demo'] + (10-k_cor)*['test'])
+    df_inc.insert(4, 'sample_type', k_inc*['demo'] + (10-k_inc)*['test'])
     df = pd.concat([df_cor, df_inc], ignore_index=True)
     
     # shuffle sample order to mix cor/inc test samples
@@ -71,76 +71,95 @@ def initialize_dataframe(input_type, m, s, e, k):
 
     # generate file names for ease of access
     cor_tag = ''
-    df['file'] = df.apply(lambda row: f'm{row["movement"]:02d}_s{row["subject"]:02d}_e{row["episode"]:02d}', axis=1)
+    df.insert(5, 'file', df.apply(lambda row: f'm{row["movement"]:02d}_s{row["subject"]:02d}_e{row["episode"]:02d}', axis=1))
     df['file'] = df['file'] + df['correctness'].apply(lambda x: cor_tag if x == 1 else '_inc')
 
     return df
 
-def create_prompts_pos(df, total, k, save_dir_txt, dataname, device):
-    # create LLM prompt 1 with k demos
-    save_path1_txt = save_dir_txt + f'/{k}_demos-1_test.txt'
-    out_format = "Desired output format: \"{Label}\""
-    instructions = "Instructions: Identify the label (“correct” or “incorrect”) for the data sample below containing sequences of xyz positions of 22 body joints extracted from Kinect data of standing shoulder abduction exercise. Ensure the output adheres to the format provided." 
-    write_to_txt(save_path1_txt, out_format, newline_after=True)
-    append_to_txt(save_path1_txt, instructions, newline_after=True)
+def log_experiment(save_path_csv, df):
+    df.to_csv(save_path_csv, index=False)
 
-    i = 0
-    while i < k: # for each demo
-        data_start = f"Data {i+1}: '''"
-        append_to_txt(save_path1_txt, data_start, newline_after=True)
-        file = df.loc[i, 'file']
-        correctness = 'correct' if df.loc[i, 'correctness'] == 1 else 'incorrect'
-        print("DEMO FILE: ", file)
+def one_sample_block(sample_num, csv_file_path, save_path_txt, correctness):
+    '''
+    Append one data sample block (from csv) to txt file
+    Correctness: 'correct' or 'incorrect' or 'test'
 
-        csv_file_path = f'dataset/{dataname}_positions/{correctness}/{device}/positions/{file}_positions.csv'
-        data = read_csv(csv_file_path)
-        for row in data:
-            append_to_txt(save_path1_txt, ','.join(row)+ '\n')
-
-        data_end = f"'''\nLabel {i+1}: {correctness} "
-        append_to_txt(save_path1_txt, data_end + '\n', newline_after=True)
-
-        i += 1
-    # adding one test sample to the end of demos
-    data_start = f"Data {i+1}: '''"
-    append_to_txt(save_path1_txt, data_start, newline_after=True)
-    file = df.loc[i, 'file']
-    correctness = 'correct' if df.loc[i, 'correctness'] == 1 else 'incorrect'
-    print("--------TEST FILE: ", file)
-
-    csv_file_path = f'dataset/{dataname}_positions/{correctness}/{device}/positions/{file}_positions.csv'
+    '''
+    data_start = f"Data {sample_num+1}: '''"
+    append_to_txt(save_path_txt, data_start, newline_after=True)
     data = read_csv(csv_file_path)
     for row in data:
-        append_to_txt(save_path1_txt, ','.join(row)+ '\n')
+        append_to_txt(save_path_txt, ','.join(row)+ '\n')
 
-    data_end = f"'''\nLabel {i+1}: "
-    append_to_txt(save_path1_txt, data_end + '\n', newline_after=True)
-    i += 1
-    print("file saved as: ", save_path1_txt)
+    data_end = f"'''\nLabel {sample_num+1}: {correctness}"
+    if correctness == 'test':
+        data_end = f"'''\nLabel {sample_num+1}: "
+    append_to_txt(save_path_txt, data_end + '\n', newline_after=True)
 
-    # create LLM prompt 2 with test examples
-    save_path2_txt = save_dir_txt + f'/{total-i}_tests.txt'
+def calculate_test_count(remaining):
+    '''
+    Splits remaining test samples into blocks of 3 or less
+    to account for LLM input size limitations
+    '''
+    tests_per_file = []
+
+    if remaining < 4:
+        return [remaining]
+    while remaining > 3:
+        tests_per_file.append(3)
+        remaining -= 3
+    if remaining > 0:
+        tests_per_file.append(remaining)
+
+    return tests_per_file
+
+def create_prompts_pos(df, total, k, save_dir_txt, dataname, device):
+    # create LLM prompt 1 with k demos
+    save_path_txt = save_dir_txt + f'/0_{k}demos1test.txt'
     out_format = "Desired output format: \"{Label}\""
-    instructions = f"Instructions: Here are {total-i} more samples (unlabelled), please maintain the desired output format, returning each label on a new line." 
-    write_to_txt(save_path2_txt, out_format, newline_after=True)
-    append_to_txt(save_path2_txt, instructions, newline_after=True)
+    instructions = "Instructions: Identify the label (“correct” or “incorrect”) for the data sample below containing sequences of xyz positions of 22 body joints extracted from Kinect data of standing shoulder abduction exercise. Ensure the output adheres to the format provided." 
+    write_to_txt(save_path_txt, out_format, newline_after=True)
+    append_to_txt(save_path_txt, instructions, newline_after=True)
 
-    while i < total: # for each remaining test
-        data_start = f"Data {i+1}: '''"
-        append_to_txt(save_path2_txt, data_start, newline_after=True)
-        file = df.loc[i, 'file']
-        correctness = 'correct' if df.loc[i, 'correctness'] == 1 else 'incorrect'
-        print("TEST FILE: ", file)
-
+    sample_num = 0
+    while sample_num < k: # for each demo
+        file = df.loc[sample_num, 'file']
+        correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
+        print("DEMO FILE: ", file)
         csv_file_path = f'dataset/{dataname}_positions/{correctness}/{device}/positions/{file}_positions.csv'
-        data = read_csv(csv_file_path)
-        for row in data:
-            append_to_txt(save_path2_txt, ','.join(row)+ '\n')
+        one_sample_block(sample_num, csv_file_path, save_path_txt, correctness)
+        sample_num += 1
 
-        data_end = f"'''\nLabel {i+1}: "
-        append_to_txt(save_path2_txt, data_end + '\n', newline_after=True)
-        i += 1
-    print("file saved as: ", save_path2_txt)
+    # add one test sample to the end of demos
+    file = df.loc[sample_num, 'file']
+    correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
+    print("DEMO-TEST FILE: ", file)
+    csv_file_path = f'dataset/{dataname}_positions/{correctness}/{device}/positions/{file}_positions.csv'
+    one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
+    sample_num += 1
+    print("file saved as: ", save_path_txt)
+
+    # create LLM prompt files to cover remaining test examples
+    tests_per_file = calculate_test_count(total - sample_num)
+
+    for file_num in range(len(tests_per_file)):
+        print("------TEST FILE NUM: ", file_num)
+        num_tests = tests_per_file[file_num]
+        save_path_txt = save_dir_txt + f'/{file_num+1}_{num_tests}tests.txt'
+        out_format = "Desired output format: \"{Label}\""
+        instructions = f"Instructions: Here are {num_tests} more samples (unlabelled), please maintain the desired output format, returning each label on a new line." 
+        write_to_txt(save_path_txt, out_format, newline_after=True)
+        append_to_txt(save_path_txt, instructions, newline_after=True)
+
+        for i in range(num_tests):
+            file = df.loc[sample_num, 'file']
+            correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
+            print("TEST FILE: ", file)
+            csv_file_path = f'dataset/{dataname}_positions/{correctness}/{device}/positions/{file}_positions.csv'
+            one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
+            sample_num += 1
+
+    print("file saved as: ", save_path_txt)
 
 '''
 TERMINAL RUN COMMAND:
@@ -172,7 +191,7 @@ if __name__ == '__main__':
     e = args.e
 
     num_tests = 20 - k # number of examples to include in each test prompt
-    exp_name = str(k) + "-shot-" + input_type
+    exp_name = str(k) + "shot-" + input_type
     if m != 0: 
         exp_name += f"_m{m:02d}"
     if s != 0:
@@ -193,3 +212,5 @@ if __name__ == '__main__':
 
     if input_type == 'pos':
         create_prompts_pos(df, total, k, save_dir_txt, dataname, device)
+    
+    log_experiment(save_dir_txt + f'/log_{exp_name}.csv', df)
