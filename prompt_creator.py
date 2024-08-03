@@ -147,7 +147,7 @@ def create_prompts_pos(df, total, k, save_dir_txt, dataname, device):
         num_tests = tests_per_file[file_num]
         save_path_txt = save_dir_txt + f'/{file_num+1}_{num_tests}tests.txt'
         out_format = "Desired output format: \"{Label}\""
-        instructions = f"Instructions: Here are {num_tests} more samples (unlabelled), please maintain the desired output format, returning each label on a new line." 
+        instructions = f"Instructions: Here are {num_tests} more samples (unlabelled), please maintain the desired output format, returning each label on a new line either \"correct\" or \"incorrect\"." 
         write_to_txt(save_path_txt, out_format, newline_after=True)
         append_to_txt(save_path_txt, instructions, newline_after=True)
 
