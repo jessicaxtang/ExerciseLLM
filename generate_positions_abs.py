@@ -38,7 +38,7 @@ if __name__ == '__main__':
                 pos_path = 'dataset/{}/{}/{}/positions/m{:02d}_s{:02d}_e{:02d}_positions{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
                 ang_path = 'dataset/{}/{}/{}/angles/m{:02d}_s{:02d}_e{:02d}_angles{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
 
-                print("pos_path: ", pos_path)
+                # print("pos_path: ", pos_path)
 
                 pos_data = np.loadtxt(pos_path, delimiter=',')
                 ang_data = np.loadtxt(ang_path, delimiter=',')
@@ -52,15 +52,14 @@ if __name__ == '__main__':
                 else: # if s in [7, 10]: # left
                     data_file = preprocess_pos(skel_T, 'left')
 
-                save_dir = f'dataset/{dataname}_{input_type}/{correctness}/{device}/{input_type}'
+                save_dir = f'dataset/{dataname}_generated/{correctness}/{device}/{input_type}'
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
 
-                save_path = f'dataset/{dataname}_{input_type}/{correctness}/{device}/{input_type}/' + 'm{:02d}_s{:02d}_e{:02d}{}_{}'.format(m, s, e, cor_tag, input_type)
-                print("Save path: ", save_path)
+                save_path = f'dataset/{dataname}_generated/{correctness}/{device}/{input_type}/' + 'm{:02d}_s{:02d}_e{:02d}{}_{}'.format(m, s, e, cor_tag, input_type)
+                # print("Save path: ", save_path)
 
                 data_file.to_csv(save_path + '.csv', index=False)
                 count += 1
-
 
     print(f"All {count} files saved to {save_dir}!")

@@ -18,7 +18,7 @@ import pandas as pd
 import numpy as np
 # from utils.skel_features import extract_features
 # from utils.skel_conversions import rel2abs, transform_data
-from LLM_preprocess import preprocess_features
+from LLM_preprocess import preprocess_joints, preprocess_features
 
 # order of joint connections
 J = np.array([[3, 5, 4, 2, 1, 2, 6, 7, 8, 2, 10, 11, 12, 0, 14, 15, 16, 0, 18, 19, 20],
@@ -53,28 +53,29 @@ if __name__ == '__main__':
                 pos_path = 'dataset/{}/{}/{}/positions/m{:02d}_s{:02d}_e{:02d}_positions{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
                 ang_path = 'dataset/{}/{}/{}/angles/m{:02d}_s{:02d}_e{:02d}_angles{}.txt'.format(dataname, correctness, device, m, s, e, cor_tag)
 
-                print("pos_path: ", pos_path)
+                # print("pos_path: ", pos_path)
 
                 pos_data = np.loadtxt(pos_path, delimiter=',')
                 ang_data = np.loadtxt(ang_path, delimiter=',')
 
                 num_frames = pos_data.shape[0]
 
+                skel_T = preprocess_joints(pos_data, ang_data, num_kp, num_axes, num_frames)
                 if s not in [7, 10]: # right
-                    data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, 'right')
+                    data_file = preprocess_features(skel_T, 'right')
                 else: # if s in [7, 10]: # left
-                    data_file = preprocess_features(pos_data, ang_data, num_kp, num_axes, num_frames, 'left')
+                    data_file = preprocess_features(skel_T, 'left')
 
                 # save_dir = 'dataset/{}/{}/{}/{}_{}'.format(dataname, correctness, device, input_type, subdir)
-                save_dir = 'dataset/{}_features/{}/{}/{}'.format(dataname, correctness, device, input_type)
+                save_dir = 'dataset/{}_generated/{}/{}/{}'.format(dataname, correctness, device, input_type)
                 # print("Save directory: ", save_dir)
                 if not os.path.exists(save_dir):
                     os.makedirs(save_dir)
 
                 # save_path = subdir + '_' + correctness + '_m{:02d}_s{:02d}_e{:02d}.npy'.format(m, s, e)
                 # save_path = 'dataset/{}_LLM/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}{}_dr{:02d}_{}'.format(dataname, correctness, device, input_type, m, s, e, cor_tag, downsample_rate, input_type)
-                save_path = 'dataset/{}_features/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}{}_{}'.format(dataname, correctness, device, input_type, m, s, e, cor_tag, input_type)
-                print("Save path: ", save_path)
+                save_path = 'dataset/{}_generated/{}/{}/{}/m{:02d}_s{:02d}_e{:02d}{}_{}'.format(dataname, correctness, device, input_type, m, s, e, cor_tag, input_type)
+                # print("Save path: ", save_path)
                 # np.save(save_path, data_file)
 
                 data_file.to_csv(save_path + '.csv', index=False)
