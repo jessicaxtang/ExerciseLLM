@@ -81,4 +81,4 @@ if __name__ == '__main__':
                 data_file.to_csv(save_path + '.csv', index=False)
                 count += 1
 
-    print("Total number of files saved: ", count)
+    print(f"All {count} files saved! Last file to: {save_dir}")
