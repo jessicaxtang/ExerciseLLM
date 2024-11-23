@@ -1,9 +1,9 @@
 # ExerciseLLM
-Python code and dataset repository for paper "insert_paper_name"
+Python code and dataset repository for paper "Leveraging Large Language Models for Rehabilitation Exercise Quality
+Assessment and Feedback Generation"
 KITE Research Institute 2024
 
 [[Project Page]](insert_link) [[Paper]](insert_link) 
-
 
 (add image of architecture/visualizations)
 
