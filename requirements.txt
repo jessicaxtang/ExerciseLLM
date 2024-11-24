@@ -1,7 +1,9 @@
-accelerate
-ipykernel
+# accelerate
+# ipykernel
 matplotlib
 numpy
 pandas
-torch
-transformers
+selenium
+undetected-chromedriver
+# torch
+# transformers

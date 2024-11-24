@@ -27,9 +27,12 @@ def eulers_2_rot_matrix(x):
 
 
 # convert the data from relative coordinates to absolute coordinates
-def rel2abs(p, a, num_kp, num_axes, num_frames):
-    skel = np.zeros((num_kp, num_axes, num_frames))
-    for i in range(num_frames):
+def relative_absolute(p, a):
+
+    skel = np.zeros_like(p)
+
+    for i in range(p.shape[2]):
+
         """
         1 Waist (absolute)
         2 Spine
@@ -55,48 +58,67 @@ def rel2abs(p, a, num_kp, num_axes, num_frames):
         22 Right leg toes
         """
 
-        # extract joint pos and angles for current frame
         joint = p[:, :, i]
         joint_ang = a[:, :, i]
 
         # chest, neck, head
-        rot = eulers_2_rot_matrix(joint_ang[0, :] * np.pi / 180) # initialize waist rotation matrix
-        for j in range(1, 6): # spine to head tip
+        rot = eulers_2_rot_matrix(joint_ang[0, :] * np.pi / 180)
+        for j in range(1, 6):
             rot = rot @ eulers_2_rot_matrix(joint_ang[j, :] * np.pi / 180)
             joint[j, :] = rot @ joint[j, :] + joint[j - 1, :]
 
-        # left-arm
-        rot = eulers_2_rot_matrix(joint_ang[2, :] * np.pi / 180) 
-        joint[6, :] = rot @ joint[6, :] + joint[2, :] # left collar rotation matrix
+            # left-arm
+        rot = eulers_2_rot_matrix(joint_ang[2, :] * np.pi / 180)
+        joint[6, :] = rot @ joint[6, :] + joint[2, :]
         for j in range(7, 10):
             rot = rot @ eulers_2_rot_matrix(joint_ang[j - 1, :] * np.pi / 180)
             joint[j, :] = rot @ joint[j, :] + joint[j - 1, :]
 
-        # right-arm
+            # right-arm
         rot = eulers_2_rot_matrix(joint_ang[2, :] * np.pi / 180)
-        joint[10, :] = rot @ joint[10, :] + joint[2, :] # right collar rotation matrix
+        joint[10, :] = rot @ joint[10, :] + joint[2, :]
         for j in range(11, 14):
             rot = rot @ eulers_2_rot_matrix(joint_ang[j - 1, :] * np.pi / 180)
             joint[j, :] = rot @ joint[j, :] + joint[j - 1, :]
 
-        # left-leg
+            # left-leg
         rot = eulers_2_rot_matrix(joint_ang[0, :] * np.pi / 180)
-        joint[14, :] = rot @ joint[14, :] + joint[0, :] # left upper leg rotation matrix
+        joint[14, :] = rot @ joint[14, :] + joint[0, :]
         for j in range(15, 18):
             rot = rot @ eulers_2_rot_matrix(joint_ang[j - 1, :] * np.pi / 180)
             joint[j, :] = rot @ joint[j, :] + joint[j - 1, :]
 
-        # right-leg
+            # right-leg
         rot = eulers_2_rot_matrix(joint_ang[0, :] * np.pi / 180)
-        joint[18, :] = rot @ joint[18, :] + joint[0, :]
-        for j in range(19, 22):
+        for j in range(18, 22):
             rot = rot @ eulers_2_rot_matrix(joint_ang[j - 1, :] * np.pi / 180)
             joint[j, :] = rot @ joint[j, :] + joint[j - 1, :]
 
         skel[:, :, i] = joint
-    return skel      
+
+    return skel    
 
 def transform_data(data, num_kp, num_axes):
     data = data.T
     data = data.reshape(num_kp, num_axes, -1)
     return data
+
+def get_exercise_side(df, s, m):
+    """
+    Retrieve the 'right' or 'left' value for a specific subject (s) and exercise (m).
+
+    Parameters:
+        df (pd.DataFrame): The DataFrame containing the exercise data.
+        s (str): The subject ID (e.g., 's01' to 's10').
+        m (str): The exercise ID (e.g., 'm02' to 'm10').
+
+    Returns:
+        str: 'right' or 'left' for the specified subject and exercise, or an error message if not found.
+    """
+    # Find the row with the matching subject and return the value in the specified exercise column
+    row = df[df['s'] == s]
+
+    if not row.empty and m in df.columns:
+        return row[m].values[0]
+    else:
+        return "Invalid subject ID or exercise ID"
