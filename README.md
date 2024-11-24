@@ -1,9 +1,9 @@
 # ExerciseLLM
-Python code and dataset repository for paper "insert_paper_name"
+Python code and dataset repository for paper "Leveraging Large Language Models for Rehabilitation Exercise Quality
+Assessment and Feedback Generation"
 KITE Research Institute 2024
 
 [[Project Page]](insert_link) [[Paper]](insert_link) 
-
 
 (add image of architecture/visualizations)
 
@@ -50,7 +50,7 @@ Currently for UI-PRMD, only the segmented files from Kinect are used. Ensure the
 Run the following Python scripts to generate the corresponding data files
 
 **Absolute Coordinates**
-Position to absolute coordinates: `generate_positions_abs.py` # maybe rename positions to coordinates idk, pos confusing w original data?
+Position to absolute coordinates: `generate_coordinates.py`
 
 **Features**
 Feature extractors: `generate_features_set.py`
@@ -79,7 +79,7 @@ Feature extractors: `generate_cot_set.py`
             ├── m01_s01_e02_features.csv
             ├── ...
             └── m10_s10_e10_features.csv
-        ├── positions/
+        ├── coordinates/
         └── chainofthought/ #idk yet for this, need api 
     └── incorrect/
 └── UI-PRMD_visualization.ipynb # also move this somewhere else i feel like

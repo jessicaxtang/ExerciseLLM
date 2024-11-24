@@ -2,7 +2,6 @@ import csv
 import os
 import argparse
 import pandas as pd
-from random import randint
 
 def read_csv(csv_file_path):
     with open(csv_file_path, mode='r', newline='', encoding='utf-8') as csv_file:
@@ -48,7 +47,8 @@ def create_dataframe(input_type, m, s, e, correctness):
 
     return df
 
-def initialize_dataframe(input_type, m, s, e, k):
+def initialize_dataframe_20(input_type, m, s, e, k):
+    # dataframe with only for tests with 20 samples
 
     # create separate dataframes for correct and incorrect examples
     df_cor = create_dataframe(input_type, m, s, e, 'correct')
@@ -74,6 +74,27 @@ def initialize_dataframe(input_type, m, s, e, k):
     df.insert(5, 'file', df.apply(lambda row: f'm{row["movement"]:02d}_s{row["subject"]:02d}_e{row["episode"]:02d}', axis=1))
     df['file'] = df['file'] + df['correctness'].apply(lambda x: cor_tag if x == 1 else '_inc')
 
+    return df
+
+#TO DO: combine 20 and 200 initialize dataframe functions into 1 function
+#TO DO: add option to pass in specific demo files
+def initialize_dataframe_200(input_type, m, s, e, k):
+    # dataframe with only for tests with 200 samples
+    pass
+    # return df
+
+def custom_dataframe(csv_file_path):
+    df = pd.read_csv(csv_file_path)
+
+    # shuffle sample order to mix cor/inc test samples
+    df = df.sample(frac=1)
+    df.sort_values('sample_type', ignore_index=True, inplace=True)
+
+    # generate file names for ease of access
+    cor_tag = ''
+    df.insert(5, 'file', df.apply(lambda row: f'm{row["movement"]:02d}_s{row["subject"]:02d}_e{row["episode"]:02d}', axis=1))
+    df['file'] = df['file'] + df['correctness'].apply(lambda x: cor_tag if x == 1 else '_inc')
+    
     return df
 
 def log_experiment(save_path_csv, df):
@@ -117,11 +138,11 @@ def calculate_test_count(input_type, remaining):
 
     return tests_per_file
 
-def create_prompts_pos(df, total, k, save_dir_txt, dataname, device):
+def create_prompts_coords(df, total, k, save_dir_txt, dataname, device, input_type='coordinates'):
     # create LLM prompt 1 with k demos
     save_path_txt = save_dir_txt + f'/0_{k}demos1test.txt'
     out_format = "Desired output format: \"{Label}\""
-    instructions = "Instructions: Identify the label (“correct” or “incorrect”) for the data sample below containing sequences of xyz positions of 22 body joints extracted from Kinect data of standing shoulder abduction exercise. Ensure the output adheres to the format provided." 
+    instructions = "Instructions: Identify the label (“correct” or “incorrect”) for the data sample below containing sequences of xyz coordinates of 22 body joints extracted from Kinect data of standing shoulder abduction exercise. Ensure the output adheres to the format provided." 
     write_to_txt(save_path_txt, out_format, newline_after=True)
     append_to_txt(save_path_txt, instructions, newline_after=True)
 
@@ -130,7 +151,7 @@ def create_prompts_pos(df, total, k, save_dir_txt, dataname, device):
         file = df.loc[sample_num, 'file']
         correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
         print("DEMO FILE: ", file)
-        csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/positions/{file}_positions.csv'
+        csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/{input_type}/{file}_{input_type}.csv'
         one_sample_block(sample_num, csv_file_path, save_path_txt, correctness)
         sample_num += 1
 
@@ -138,13 +159,13 @@ def create_prompts_pos(df, total, k, save_dir_txt, dataname, device):
     file = df.loc[sample_num, 'file']
     correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
     print("DEMO-TEST FILE: ", file)
-    csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/positions/{file}_positions.csv'
+    csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/{input_type}/{file}_{input_type}.csv'
     one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
     sample_num += 1
     print("file saved as: ", save_path_txt)
 
     # create LLM prompt files to cover remaining test examples
-    tests_per_file = calculate_test_count('pos', total - sample_num)
+    tests_per_file = calculate_test_count('coords', total - sample_num)
 
     for file_num in range(len(tests_per_file)):
         print("------TEST FILE NUM: ", file_num)
@@ -159,13 +180,13 @@ def create_prompts_pos(df, total, k, save_dir_txt, dataname, device):
             file = df.loc[sample_num, 'file']
             correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
             print("TEST FILE: ", file)
-            csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/positions/{file}_positions.csv'
+            csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/{input_type}/{file}_{input_type}.csv'
             one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
             sample_num += 1
 
     print("file saved as: ", save_path_txt)
 
-def create_prompts_feat(df, total, k, save_dir_txt, dataname, device):
+def create_prompts_feat(df, total, k, save_dir_txt, dataname, device, input_type='features'):
     # create LLM prompt 1 with k demos
     save_path_txt = save_dir_txt + f'/0_{k}demos1test.txt'
     out_format = "Desired output format: \"{Label}\""
@@ -178,7 +199,7 @@ def create_prompts_feat(df, total, k, save_dir_txt, dataname, device):
         file = df.loc[sample_num, 'file']
         correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
         print("DEMO FILE: ", file)
-        csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/features/{file}_features.csv'
+        csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/{input_type}/{file}_{input_type}.csv'
         one_sample_block(sample_num, csv_file_path, save_path_txt, correctness)
         sample_num += 1
 
@@ -186,7 +207,7 @@ def create_prompts_feat(df, total, k, save_dir_txt, dataname, device):
     file = df.loc[sample_num, 'file']
     correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
     print("DEMO-TEST FILE: ", file)
-    csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/features/{file}_features.csv'
+    csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/{input_type}/{file}_{input_type}.csv'
     one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
     sample_num += 1
     print("file saved as: ", save_path_txt)
@@ -207,18 +228,18 @@ def create_prompts_feat(df, total, k, save_dir_txt, dataname, device):
             file = df.loc[sample_num, 'file']
             correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
             print("TEST FILE: ", file)
-            csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/features/{file}_features.csv'
+            csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/{input_type}/{file}_{input_type}.csv'
             one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
             sample_num += 1
 
     print("file saved as: ", save_path_txt)
 
 
-def create_prompts_cot(df, total, k, save_dir_txt, dataname, device):
+def create_prompts_cot(df, total, k, save_dir_txt, dataname, device, input_type='features'):
     # create LLM prompt 1 with k demos
     save_path_txt = save_dir_txt + f'/0_{k}demos1test.txt'
     out_format = "Desired output format: \"{Label}: {Adjective} {noun} {body part and feature}\":  "
-    instructions = "Instructions: Identify the label and provide the top 1 to 3 rationale for the corresponding label “correct” or “incorrect” for the data sample below containing sequences of three features extracted from Kinect data of standing shoulder abduction exercise. Ensure the output adheres to the format provided."
+    instructions = f"Instructions: Identify the label and provide the top 1 to 3 rationale for the corresponding label “correct” or “incorrect” for the {k+1}th data sample below containing sequences of three features extracted from Kinect data of standing shoulder abduction exercise. Ensure the output adheres to the format provided."
     write_to_txt(save_path_txt, out_format, newline_after=True)
     append_to_txt(save_path_txt, instructions, newline_after=True)
 
@@ -227,7 +248,7 @@ def create_prompts_cot(df, total, k, save_dir_txt, dataname, device):
         file = df.loc[sample_num, 'file']
         correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
         print("DEMO FILE: ", file)
-        csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/features/{file}_features.csv'
+        csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/{input_type}/{file}_{input_type}.csv'
         one_sample_block(sample_num, csv_file_path, save_path_txt, correctness)
         sample_num += 1
 
@@ -235,13 +256,13 @@ def create_prompts_cot(df, total, k, save_dir_txt, dataname, device):
     file = df.loc[sample_num, 'file']
     correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
     print("DEMO-TEST FILE: ", file)
-    csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/features/{file}_features.csv'
+    csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/{input_type}/{file}_{input_type}.csv'
     one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
     sample_num += 1
     print("file saved as: ", save_path_txt)
 
     # create LLM prompt files to cover remaining test examples
-    tests_per_file = calculate_test_count('feat', total - sample_num)
+    tests_per_file = calculate_test_count('cot', total - sample_num)
 
     for file_num in range(len(tests_per_file)):
         print("------TEST FILE NUM: ", file_num)
@@ -256,7 +277,7 @@ def create_prompts_cot(df, total, k, save_dir_txt, dataname, device):
             file = df.loc[sample_num, 'file']
             correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
             print("TEST FILE: ", file)
-            csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/features/{file}_features.csv'
+            csv_file_path = f'dataset/{dataname}_generated/{correctness}/{device}/{input_type}/{file}_{input_type}.csv'
             one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
             sample_num += 1
 
@@ -274,7 +295,7 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, default='kinect', help='device used to capture data')
     parser.add_argument('--total', type=int, default=20, help='total number of samples in entire experiment')
     parser.add_argument('--k', type=int, default=0, help='k value for number of demos')
-    parser.add_argument('--input_type', type=str, default='feat', help='type of input data: pos, feat, or cot')
+    parser.add_argument('--input_type', type=str, default='feat', help='type of input data: coordinates, features, or cot')
     parser.add_argument('--m', type=int, default=7, help='if 0, generate random value. if 1-10, use const value')
     parser.add_argument('--s', type=int, default=1, help='if 0, generate random value. if 1-10, use const value')
     parser.add_argument('--e', type=int, default=0, help='if 0, generate random value. if 1-10, use const value')
@@ -299,14 +320,15 @@ if __name__ == '__main__':
         os.makedirs(save_dir_txt)
 
     # initialize dataframe to store experiment file information
-    df = initialize_dataframe(input_type, m, s, e, k)    
+    # df = initialize_dataframe_20(input_type, m, s, e, k)    
+    df = custom_dataframe('10shot-cot.csv')
     print(df)
 
     if input_type == 'pos':
-        create_prompts_pos(df, total, k, save_dir_txt, dataname, device)
+        create_prompts_coords(df, total, k, save_dir_txt, dataname, device, 'coordinates')
     elif input_type == 'feat':
-        create_prompts_feat(df, total, k, save_dir_txt, dataname, device)
+        create_prompts_feat(df, total, k, save_dir_txt, dataname, device, 'features')
     elif input_type == 'cot':
-        create_prompts_cot(df, total, k, save_dir_txt, dataname, device)
+        create_prompts_cot(df, total, k, save_dir_txt, dataname, device, 'features')
     
     log_experiment(save_dir_txt + f'/log_{exp_name}.csv', df)
