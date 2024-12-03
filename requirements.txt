@@ -1,9 +1,11 @@
 # accelerate
-# ipykernel
+ipykernel
 matplotlib
 numpy
 pandas
 selenium
+scikit-learn
+tqdm
 undetected-chromedriver
 # torch
 # transformers
