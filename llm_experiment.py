@@ -9,7 +9,7 @@ def get_settings():
     """
     Prompt the user for input_type, k-shot, movement, and subject number.
     """
-    input_type = input("Enter input type ('abs', 'feats', or 'cot'): ").strip().lower()
+    input_type = input("Enter input type ('abs', 'feat', or 'cot'): ").strip().lower()
     k = int(input("Enter k-shot (0-4): ").strip())
     m = int(input("Enter movement number (1-10): ").strip())
     s = int(input("Enter subject number (1-10): ").strip())
@@ -53,15 +53,23 @@ def get_llm_responses():
         responses.extend(normalized_responses)
     return responses
 
-def update_csv(df, llm_responses):
+def update_csv(df, llm_responses, k):
     """
-    Update the CSV with normalized LLM responses for correctness.
+    Update the CSV with normalized LLM responses for correctness,
+    starting from the ((k*2)+1)th row.
     """
-    if len(llm_responses) != len(df):
-        raise ValueError(f"Mismatch: {len(llm_responses)} LLM responses for {len(df)} rows in the CSV.")
+    # Calculate the starting index
+    start_index = (k * 2)
+
+    # Ensure the LLM responses match the appropriate range of rows
+    if len(llm_responses) != len(df) - start_index:
+        raise ValueError(
+            f"Mismatch: {len(llm_responses)} LLM responses for {len(df) - start_index} rows in the CSV "
+            f"starting at row {start_index + 1}."
+        )
 
     # Map normalized responses to correctness: "correct" -> 1, "incorrect" -> 0
-    llm_correctness = []
+    llm_correctness = [pd.NA] * start_index  # Initialize with None for the first k*2 rows
     for resp in llm_responses:
         if resp == "correct":
             llm_correctness.append(1)
@@ -140,7 +148,7 @@ if __name__ == '__main__':
 
             # Get and update with LLM responses
             llm_responses = get_llm_responses()
-            updated_df = update_csv(ground_truth_df, llm_responses)
+            updated_df = update_csv(ground_truth_df, llm_responses, k)
 
             # Save updated CSV
             updated_df.to_csv(ground_truth_path, index=False)

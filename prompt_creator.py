@@ -127,27 +127,6 @@ def one_sample_block(sample_num, csv_file_path, save_path_txt, correctness):
         data_end = f"<\\data>\nLabel {sample_num+1}: "
     append_to_txt(save_path_txt, data_end + '\n', newline_after=True)
 
-# def calculate_test_count(input_type, remaining):
-#     '''
-#     Splits remaining test samples into blocks of 3 or less
-#     to account for LLM input size limitations
-#     '''
-#     tests_per_file = []
-#     multiplier = 1
-
-#     if input_type == 'feat' or input_type == 'cot':
-#         multiplier = 3
-
-#     if remaining <= 4*multiplier:
-#         return [remaining]
-#     while remaining > 3*multiplier:
-#         tests_per_file.append(3*multiplier)
-#         remaining -= 3*multiplier
-#     if remaining > 0:
-#         tests_per_file.append(remaining)
-
-#     return tests_per_file
-
 def get_data_splits(input_type, k):
     """
     Get the number of demos and test samples based on input type and k (k = 0-4).
