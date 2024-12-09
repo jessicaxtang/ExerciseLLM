@@ -158,7 +158,7 @@ def preprocess_joints(pos_data, ang_data, num_kp, num_axes, num_frames):
 
 def preprocess_pos(data, dominant_side):
     '''
-    joints: a list of most relevant joints ranging from 1 to 22 for kinect, 1 to 39 for vicon
+    joints: a list of most relevant joints ranging from 1 to 22 for kinect
     '''
     joints = []
     column_names = ['Waist_X', 'Waist_Y', 'Waist_Z', 
