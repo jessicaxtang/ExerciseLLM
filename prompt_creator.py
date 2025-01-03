@@ -7,6 +7,7 @@ import os
 import pandas as pd
 from tqdm import tqdm
 
+# utility functions
 def read_csv(csv_file_path):
     with open(csv_file_path, mode='r', newline='', encoding='utf-8') as csv_file:
         csv_reader = csv.reader(csv_file)
@@ -84,32 +85,15 @@ def initialize_dataframe_20(input_type, m, s, e, k):
 
     return df
 
-def custom_dataframe(csv_file_path):
-    '''
-    If using a custom csv file, read the file and create a dataframe
-    '''
-    df = pd.read_csv(csv_file_path)
-
-    # shuffle sample order to mix cor/inc test samples
-    df = df.sample(frac=1)
-    df.sort_values('sample_type', ignore_index=True, inplace=True)
-
-    # generate file names for ease of access
-    cor_tag = ''
-    df.insert(5, 'file', df.apply(lambda row: f'm{row["movement"]:02d}_s{row["subject"]:02d}_e{row["episode"]:02d}', axis=1))
-    df['file'] = df['file'] + df['correctness'].apply(lambda x: cor_tag if x == 1 else '_inc')
-    
-    return df
-
 def log_experiment(save_path_csv, df):
     save_path_csv = os.path.join(save_path_csv, 'ground_truth.csv')
     df.to_csv(save_path_csv, index=False)
 
-def one_sample_block(sample_num, csv_file_path, save_path_txt, correctness):
+# prompt creation logic
+def one_sample_block(sample_num, csv_file_path, save_path_txt, correctness, confidence=False):
     '''
     Append one data sample block (from csv) to txt file
     Correctness: 'correct' or 'incorrect' or 'test'
-
     '''
     data_start = f"<data {sample_num+1}>"
     append_to_txt(save_path_txt, data_start, newline_after=True)
@@ -122,9 +106,9 @@ def one_sample_block(sample_num, csv_file_path, save_path_txt, correctness):
             rounded_row = [f"{float(value):.3f}" for value in row]  # round to 3 decimal places
             append_to_txt(save_path_txt, ','.join(rounded_row) + '\n')
 
-    data_end = f"<\\data>\nLabel {sample_num+1}: {correctness}"
+    data_end = f"<\\data {sample_num+1}>\nLabel {sample_num+1}: {correctness}"
     if correctness == 'test':
-        data_end = f"<\\data>\nLabel {sample_num+1}: "
+        data_end = f"<\\data {sample_num+1}>\nLabel {sample_num+1}: " if not confidence else f"<\\data>\nLabel {sample_num+1}, Confidence:" 
     append_to_txt(save_path_txt, data_end + '\n', newline_after=True)
 
 def get_data_splits(input_type, k):
@@ -194,12 +178,15 @@ def create_prompts_abs(df, total, k, save_dir_txt, dataname, device, move, movem
             one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
             sample_num += 1
 
-def create_prompts_feat(df, total, k, save_dir_txt, dataname, device, move, movement_map, input_type='features'):
+def create_prompts_feat(df, total, k, save_dir_txt, dataname, device, move, movement_map, input_type='features', confidence=False):
     # create LLM prompt 1 with k demos
     os.makedirs(save_dir_txt, exist_ok=True)
     save_path_txt = os.path.join(save_dir_txt, f'0_{2*k}demos1test.txt')
-    out_format = "Desired output format: \"Label\""
-    instructions = f"Instructions: Identify the label (“correct” or “incorrect”) for the {2*k+1}th data sample below containing sequences of three features extracted from {device} data of {movement_map[move]} exercise. Ensure the output adheres to the format provided."
+    out_format = "Desired output format: Label" if not confidence else "Desired output format: Label, Confidence"
+    ith = "1st" if k == 0 else f"{2*k+1}th"
+
+    confidence_text = " and how confident you are (0 to 1)" if confidence else ""    
+    instructions = f"Instructions: Identify the label (“correct” or “incorrect”){confidence_text} for the {ith} data sample below containing sequences of three features extracted from {device} data of {movement_map[move]} exercise. Ensure the output adheres to the format provided."
     write_to_txt(save_path_txt, out_format, newline_after=True)
     append_to_txt(save_path_txt, instructions, newline_after=True)
 
@@ -215,7 +202,7 @@ def create_prompts_feat(df, total, k, save_dir_txt, dataname, device, move, move
     file = df.loc[sample_num, 'file']
     correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
     csv_file_path = f'dataset/{dataname}/{correctness}/{device}/{input_type}/{file}.csv'
-    one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
+    one_sample_block(sample_num, csv_file_path, save_path_txt, 'test', confidence = confidence)
     sample_num += 1
 
     # create LLM prompt files to cover remaining test examples
@@ -224,7 +211,10 @@ def create_prompts_feat(df, total, k, save_dir_txt, dataname, device, move, move
     for file_num in range(len(tests_per_file)):
         num_tests = tests_per_file[file_num]
         save_path_txt = os.path.join(save_dir_txt, f'{file_num+1}_{num_tests}tests.txt')
-        instructions = f"Instructions: Here are {num_tests} more samples (unlabelled), please maintain the desired output format, returning each label on a new line either \"correct\" or \"incorrect\"." 
+
+        confidence_text = " with a confidence value between 0 and 1" if confidence else ""
+        instructions = f"Instructions: Here are {num_tests} more samples (unlabelled), please maintain the desired output format, returning each label on a new line either \"correct\" or \"incorrect\"{confidence_text}." 
+
         write_to_txt(save_path_txt, out_format, newline_after=True)
         append_to_txt(save_path_txt, instructions, newline_after=True)
 
@@ -326,7 +316,7 @@ if __name__ == '__main__':
                         df = initialize_dataframe_20(input_type, m, s, e, k)
                         move = f"m{m:02d}"
 
-                        # print(df)
+                        print(df)
 
                         if input_type == 'abs':
                             create_prompts_abs(df, total, k, save_dir_txt, dataname, device, move, movement_map, 'absolutes')
@@ -341,30 +331,43 @@ if __name__ == '__main__':
     
     print("All experiment prompts saved.")
 
-    ######### CODE FOR UNIT TESTING: DELETE WHEN DONE
-    # input_type = 'abs'
-    # m = 1
-    # s = 1
-    # # note: episode is the randomized variable, so no need to loop through
-    # exp_name = f"{k}shot-{input_type}_m{m:02d}_s{s:02d}_e{e:02d}"
 
-    # demo_count, test_count = 0, 0
+# ### FOR ONLY GENERATING FEAT_CONF
 
-    # save_dir_txt = os.path.join('dataset', dataname + '_prompts', input_type, exp_name)
+#     # INITIALIZE VARIABLES
+#     # fixed:
+#     dataname = 'UI-PRMD'
+#     device = 'kinect'
+#     total = 20
+#     # varies:
+#     k = 2
+#     input_type = 'feat'
+#     confidence = True
+#     m, s, e = 6, 0, 0
 
-    # if not os.path.exists(save_dir_txt):
-    #     os.makedirs(save_dir_txt)
+#     # Count total iterations for progress bar
+#     total_iterations = 10  # 10 subjects
 
-    # # initialize dataframe to store experiment file information
-    # df = initialize_dataframe_20(input_type, m, s, e, k)  
-    # move = f"m{m:02d}"  
+#     with tqdm(total=total_iterations, desc="Processing all experiments") as pbar:
+#         # loop through all subjects in this ONE settings
+#         for s in range(1, 11):  # subjects
+#             # note: episode is the randomized variable, so no need to loop through
+#             exp_name = f"{k}shot-{input_type}_m{m:02d}_s{s:02d}_e{e:02d}" if not confidence else f"{k}shot-{input_type}_conf__m{m:02d}_s{s:02d}_e{e:02d}"
+#             input_type_folder = f'{input_type}_conf' if confidence else f"{input_type}"
+#             save_dir_txt = os.path.join('dataset', dataname + '_prompts', input_type_folder, str(k) + 'shot', exp_name)
 
-    # print(df)
+#             if not os.path.exists(save_dir_txt):
+#                 os.makedirs(save_dir_txt)
 
-    # if input_type == 'abs':
-    #     print("save_dir_txt", save_dir_txt)
-    #     create_prompts_abs(df, total, k, save_dir_txt, dataname, device, move, movement_map, 'absolutes')
+#             # Initialize dataframe to store experiment file information
+#             df = initialize_dataframe_20(input_type, m, s, e, k)
+#             move = f"m{m:02d}"
+
+#             # print(df)
+
+#             create_prompts_feat(df, total, k, save_dir_txt, dataname, device, move, movement_map, 'features', confidence)
+
+#             log_experiment(save_dir_txt, df)
+#             pbar.update(1)  # Increment the progress bar
     
-    # log_experiment(save_dir_txt + f'/log_{exp_name}.csv', df)
-    # print(f"Experiment {exp_name} prompts saved to {save_dir_txt}")
-    ######### CODE FOR UNIT TESTING: DELETE WHEN DONE
+#     print("All experiment prompts saved.")
