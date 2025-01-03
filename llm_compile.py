@@ -8,14 +8,14 @@ import os
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
-OUTPUT_FILE = "classification_results.csv"
-
-def evaluate_all_metrics():
+def evaluate_all_metrics(dataset="UI-PRMD"):
     """
     Evaluate metrics for all input types and k-shot combinations and save results to a single CSV file.
     """
-
     input_types = ["abs", "feat", "cot"]
+    if dataset == "REHAB246":
+        input_types = ["feat"]
+    
     k_shots = range(4) 
 
     metrics_data = []
@@ -31,18 +31,21 @@ def evaluate_all_metrics():
             metrics_data.append(calculate_global_metrics(combined_results, input_type, k_shot))
 
             # Per-movement metrics
-            movements = combined_results['movement'].unique()
+            movement_col = "movement" if dataset == "UI-PRMD" else "exercise_id"
+            movements = combined_results[movement_col].unique()
             for movement in movements:
                 metrics_data.append(calculate_movement_metrics(combined_results, input_type, k_shot, movement))
 
     save_metrics_to_csv(metrics_data)
 
 
-def compile_results(input_type, k_shot):
+def compile_results(input_type, k_shot, dataset="UI-PRMD"):
     """
     Compile all results for a specific input type and k-shot combination.
     """
     directory_path = os.path.join("dataset", "UI-PRMD_prompts", input_type, f"{k_shot}shot")
+    if dataset == "REHAB246":
+        directory_path = os.path.join("dataset", "REHAB24-6_prompts", f"{k_shot}shot")
     print(f"Data path: {directory_path}")
     combined_results = pd.DataFrame()
 
@@ -78,7 +81,8 @@ def calculate_movement_metrics(combined_results, input_type, k_shot, movement):
     """
     Calculate metrics for a specific movement.
     """
-    movement_data = combined_results[combined_results['movement'] == movement]
+    movement_col = "movement" if dataset == "UI-PRMD" else "exercise_id"
+    movement_data = combined_results[combined_results[movement_col] == movement]
     y_true = movement_data['correctness']
     y_pred = movement_data['llm_correctness']
     return {
@@ -90,7 +94,6 @@ def calculate_movement_metrics(combined_results, input_type, k_shot, movement):
         "recall": recall_score(y_true, y_pred, zero_division=0),
         "f1_score": f1_score(y_true, y_pred, zero_division=0)
     }
-
 
 def save_metrics_to_csv(metrics_data):
     """
@@ -105,21 +108,22 @@ def save_metrics_to_csv(metrics_data):
     print(f"Metrics saved to {OUTPUT_FILE}.")
 
 
-def evaluate_single_movement(input_type, k_shot, movement):
+def evaluate_single_movement(input_type, k_shot, movement, dataset="UI-PRMD"):
     """
     Evaluate metrics for a specific movement and update the CSV file with the results.
     """
-
-    if not (1 <= movement <= 10):
+    num_movements = 10 if dataset == "UI-PRMD" else 6
+    if not (1 <= movement <= num_movements):
         print("Invalid movement. Please enter a number between 1 and 10.")
         return
 
-    combined_results = compile_results(input_type, k_shot)
+    combined_results = compile_results(input_type, k_shot, dataset)
     if combined_results.empty:
         print(f"No data found for {input_type}_{k_shot}shot.")
         return
 
-    movement_data = combined_results[combined_results['movement'] == movement]
+    movement_col = "movement" if dataset == "UI-PRMD" else "exercise_id"
+    movement_data = combined_results[combined_results[movement_col] == movement]
     if movement_data.empty:
         print(f"No data for movement '{movement}' in {input_type}_{k_shot}shot.")
         return
@@ -153,20 +157,27 @@ def evaluate_single_movement(input_type, k_shot, movement):
 
 if __name__ == "__main__":
 
+    OUTPUT_FILE = "UIPRMD_results.csv"
+    
+    # User input
+    dataset = input("Enter dataset (UI-PRMD or REHAB246): ").strip().upper()
+
+    if dataset == "REHAB246":
+        OUTPUT_FILE = "REHAB246_results.csv"
+
     if not os.path.exists(OUTPUT_FILE):
         columns = ["input_type", "k_shot", "movement", "accuracy", "precision", "recall", "f1_score"]
         pd.DataFrame(columns=columns).to_csv(OUTPUT_FILE, index=False)
         print(f"{OUTPUT_FILE} created.")
-        
-    # User input
+
     mode = input("Enter 'all' to evaluate all metrics or a movement number (1-10) to evaluate a single movement: ").strip().lower()
 
     if mode == "all":
-        evaluate_all_metrics()
+        evaluate_all_metrics(dataset=dataset)
     elif mode.isdigit() and (1 <= int(mode) <= 10):
         input_type = input("Enter input type (e.g., 'abs', 'feat', 'cot'): ").strip()
         k_shot = int(input("Enter k-shot value (e.g., 0, 1, 2, 3): ").strip())
         movement = int(mode)
-        evaluate_single_movement(input_type, k_shot, movement)
+        evaluate_single_movement(input_type, k_shot, movement, dataset=dataset)
     else:
         print("Invalid option. Please enter 'all' or a movement number between 1 and 10.")

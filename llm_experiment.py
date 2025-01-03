@@ -1,5 +1,6 @@
 '''
 Run this script to log LLM responses for web experiments.
+for UIPRMD
 '''
 
 import pandas as pd
@@ -15,11 +16,13 @@ def get_settings():
     s = int(input("Enter subject number (1-10): ").strip())
     return input_type, k, m, s
 
-def load_ground_truth(input_type, k, m, s):
+def load_ground_truth(input_type, k, m, s, dataset='UI-PRMD'):
     """
     Load the existing ground truth CSV file for the given parameters.
     """
     file_path = os.path.join("dataset", "UI-PRMD_prompts", input_type, f"{k}shot", f"{k}shot-{input_type}_m{m:02d}_s{s:02d}_e00", "ground_truth.csv")
+    if dataset == 'REHAB246':
+        file_path = os.path.join("dataset", "REHAB24-6_prompts", f"{k}shot", f"{k}shot_m{m:02d}_s{s:02d}", "ground_truth.csv")
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Ground truth file not found: {file_path}")
     return pd.read_csv(file_path), file_path
@@ -27,10 +30,13 @@ def load_ground_truth(input_type, k, m, s):
 def normalize_response(response):
     """
     Normalize an LLM response by:
+    - read responses in the form: "Label 1: correct"
     - Removing extra quotes
     - Stripping leading/trailing whitespace
     - Converting to lowercase
     """
+    if ':' in response:
+        response = response.split(':', 1)[1]  # Extract the part after ':'
     return response.strip().strip('"').lower()
 
 def get_llm_responses():
@@ -116,9 +122,9 @@ def update_tracker(tracker, file_path, input_type, k, m, s):
     tracker.to_csv(file_path, index=False)
     print("Tracker updated successfully.")
 
-if __name__ == '__main__':
+def run_test(dataname):
     # Load the test tracker
-    tracker_path = 'test_tracker.csv'
+    tracker_path = f'test_tracker_{dataname}.csv'
     tracker = pd.read_csv(tracker_path)
 
     while True:
@@ -142,7 +148,7 @@ if __name__ == '__main__':
                     continue
 
             # Load existing CSV
-            ground_truth_df, ground_truth_path = load_ground_truth(input_type, k, m, s)
+            ground_truth_df, ground_truth_path = load_ground_truth(input_type, k, m, s, dataname)
 
             print(f"Loaded ground truth file: {ground_truth_path}")
 
@@ -169,3 +175,7 @@ if __name__ == '__main__':
         if cont != 'y':
             print("Exiting.")
             break
+
+if __name__ == '__main__':
+    run_test("REHAB246")
+    # run_test("UIPRMD")
