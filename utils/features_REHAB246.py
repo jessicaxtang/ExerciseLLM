@@ -289,6 +289,7 @@ def ex03(frames_tensor):
 
         # 2. Hand Symmetry
         # Horizontal alignment of both hands.
+        # lower values indicate better symmetry
         hand_symmetry = np.abs(left_hand_joint[0] - right_hand_joint[0])
 
         # 3. Pelvic Stability

@@ -47,7 +47,7 @@ specific_joints_features = {
     },
     'm04': { # Side Lunge
         'joints': [0, 1, 2, 14, 15, 16, 18, 19, 20], 
-        'features': [0, 3, 9]  # Knee Valgus Angle, Thigh Angle, Pelvic Stabilityeatures': [0, 3, 9]  # Same as left
+        'features': [0, 3, 9]  # Knee Valgus Angle, Thigh Angle, Pelvic Stability  # Same as left
     },
     'm05': { # Sit to Stand
         'joints': [0, 1, 2, 14, 15, 16, 18, 19, 20], 
