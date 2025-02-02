@@ -172,11 +172,12 @@ def create_prompts_abs(df, total, k, save_dir_txt, dataname, device, move, movem
         append_to_txt(save_path_txt, instructions, newline_after=True)
 
         for i in range(num_tests):
-            file = df.loc[sample_num, 'file']
-            correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
-            csv_file_path = f'dataset/{dataname}/{correctness}/{device}/{input_type}/{file}.csv'
-            one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
-            sample_num += 1
+            if sample_num < 20:
+                file = df.loc[sample_num, 'file']
+                correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
+                csv_file_path = f'dataset/{dataname}/{correctness}/{device}/{input_type}/{file}.csv'
+                one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
+                sample_num += 1
 
 def create_prompts_feat(df, total, k, save_dir_txt, dataname, device, move, movement_map, input_type='features', confidence=False):
     # create LLM prompt 1 with k demos
@@ -219,11 +220,12 @@ def create_prompts_feat(df, total, k, save_dir_txt, dataname, device, move, move
         append_to_txt(save_path_txt, instructions, newline_after=True)
 
         for i in range(num_tests):
-            file = df.loc[sample_num, 'file']
-            correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
-            csv_file_path = f'dataset/{dataname}/{correctness}/{device}/{input_type}/{file}.csv'
-            one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
-            sample_num += 1
+            if sample_num < 20:
+                file = df.loc[sample_num, 'file']
+                correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
+                csv_file_path = f'dataset/{dataname}/{correctness}/{device}/{input_type}/{file}.csv'
+                one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
+                sample_num += 1
 
 
 def create_prompts_cot(df, total, k, save_dir_txt, dataname, device, move, movement_map, input_type='features'):
@@ -262,11 +264,12 @@ def create_prompts_cot(df, total, k, save_dir_txt, dataname, device, move, movem
         append_to_txt(save_path_txt, instructions, newline_after=True)
 
         for i in range(num_tests):
-            file = df.loc[sample_num, 'file']
-            correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
-            csv_file_path = f'dataset/{dataname}/{correctness}/{device}/{input_type}/{file}.csv'
-            one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
-            sample_num += 1
+            if sample_num < 20:
+                file = df.loc[sample_num, 'file']
+                correctness = 'correct' if df.loc[sample_num, 'correctness'] == 1 else 'incorrect'
+                csv_file_path = f'dataset/{dataname}/{correctness}/{device}/{input_type}/{file}.csv'
+                one_sample_block(sample_num, csv_file_path, save_path_txt, 'test')
+                sample_num += 1
 
 if __name__ == '__main__':
 
@@ -298,14 +301,15 @@ if __name__ == '__main__':
 
     with tqdm(total=total_iterations, desc="Processing all experiments") as pbar:
         # loop through all experiment settings
-        for input_type in ['abs', 'feat', 'cot']:
+        for input_type in ['abs']:
             print(f"Creating prompts for {input_type} input type...")
-            for k in range(0, 4):  # number of demos per class
+            for k in range(5, 6):  # number of demos per class
                 print(f"{k} demos...")
                 for m in range(1, 11):  # movements
                     for s in range(1, 11):  # subjects
                         # note: episode is the randomized variable, so no need to loop through
                         exp_name = f"{k}shot-{input_type}_m{m:02d}_s{s:02d}_e{e:02d}"
+                        print(exp_name)
 
                         save_dir_txt = os.path.join('dataset', dataname + '_prompts', input_type, str(k) + 'shot', exp_name)
 
@@ -316,7 +320,7 @@ if __name__ == '__main__':
                         df = initialize_dataframe_20(input_type, m, s, e, k)
                         move = f"m{m:02d}"
 
-                        print(df)
+                        # print(df)
 
                         if input_type == 'abs':
                             create_prompts_abs(df, total, k, save_dir_txt, dataname, device, move, movement_map, 'absolutes')

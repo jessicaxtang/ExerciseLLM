@@ -137,7 +137,7 @@ if __name__ == '__main__':
     with tqdm(total=6 * 10 * 4, desc="Processing experiments") as pbar:
         for exercise_id in range(1, 7):  # 6 exercises
             for person_id in range(1, 11):  # 10 persons
-                for k in range(0, 4):  # 0 to 3 demos
+                for k in range(4, 6):  # 0 to 5 demos per class
                     save_dir_txt = os.path.join(save_dir_base, f'{k}shot', f'{k}shot_m{exercise_id:02}_s{person_id:02}') # m: movement, s: subject
                     # print(save_dir_txt)
                     sample_df = initialize_dataframe(df, exercise_id, person_id, k=k)

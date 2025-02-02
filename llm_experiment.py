@@ -1,6 +1,6 @@
 '''
 Run this script to log LLM responses for web experiments.
-for UIPRMD
+for UIPRMD or REHAB24-6.
 '''
 
 import pandas as pd
