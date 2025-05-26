@@ -1,26 +1,6 @@
-# Ignore macOS specific files
 .DS_Store
-
-# Ignore environment configuration files that may contain sensitive information
 .venv
-
-# Ignore all files in a directory except one
 dataset/*
-!dataset/UI-PRMD/UI-PRMD_visualization.ipynb
 
 # Ignore generated data
 # ...
-
-# Ignore cache files
-__pycache__/*
-utils/__pycache__/*
-options/__pycache__/*
-component_crx_cache/*
-
-# Ignore all Selenium Webdriver files
-Default/*
-remote-profile/*
-Safe Browsing/*
-chromedriver
-Local State
-Variations
