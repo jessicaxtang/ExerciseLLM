@@ -110,6 +110,7 @@ Visualize UI-PRMD movements by running `UI-PRMD_visualization.ipynb`
 ## 4. Acknowledgements
 
 This research was funded by the New Frontiers in Research Fund, Canada, and the TRANSFORM HF Undergraduate Summer Research Program, Canada.
+
 Contributors are [Jessica Tang](mailto:jessicao.tang@mail.utoronto.ca), [Ali Abedi](ali.abedi@uhn.ca), [Tracey Colella](tracey.colella@uhn.ca), [Shehroz Khan](shehroz.khan@uhn.ca).
 
 ## Citation
