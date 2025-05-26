@@ -91,7 +91,7 @@ if __name__ == '__main__':
     }
 
     root = './dataset/UI-PRMD/'
-    sides_df = pd.read_csv('left-right.csv')
+    sides_df = pd.read_csv('UIPRMD_left-right.csv')
 
     total_iterations = 2 * 10 * 10 * 10 # Correct/Incorrect, Movements, Subjects, Episodes
     with tqdm(total=total_iterations, desc="Processing all experiments") as pbar:
