@@ -1,6 +1,5 @@
 # ExerciseLLM
-[IJCAI 2025 ARIAL WORKSHOP] Python code and dataset repository for paper "Rehabilitation Exercise Quality Assessment and Feedback Generation Using Large Language Models with Prompt Engineering"
-KITE Research Institute 2024
+[ARIAL@IJCAI2025] Python code and dataset repository for paper "Rehabilitation Exercise Quality Assessment and Feedback Generation Using Large Language Models with Prompt Engineering"
 
 [[ArXiv Paper]](insert_link) 
 
@@ -110,6 +109,6 @@ Visualize UI-PRMD movements by running `UI-PRMD_visualization.ipynb`
 
 This research was funded by the New Frontiers in Research Fund, Canada, and the TRANSFORM HF Undergraduate Summer Research Program, Canada.
 
-Contributors are [Jessica Tang](mailto:jessicao.tang@mail.utoronto.ca), [Ali Abedi](ali.abedi@uhn.ca), [Tracey Colella](tracey.colella@uhn.ca), [Shehroz Khan](shehroz.khan@uhn.ca).
+Contributors are [Jessica Tang](mailto:jessicao.tang@mail.utoronto.ca), [Ali Abedi](ali.abedi@uhn.ca), [Tracey Colella](tracey.colella@uhn.ca), [Shehroz Khan](shehroz.khan@uhn.ca) at KITE Research Institute.
 
 ## Citation
