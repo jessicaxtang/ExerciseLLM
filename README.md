@@ -1,6 +1,5 @@
 # ExerciseLLM
-Python code and dataset repository for paper "Leveraging Large Language Models for Rehabilitation Exercise Quality
-Assessment and Feedback Generation"
+[IJCAI 2025 ARIAL WORKSHOP] Python code and dataset repository for paper "Rehabilitation Exercise Quality Assessment and Feedback Generation Using Large Language Models with Prompt Engineering"
 KITE Research Institute 2024
 
 [[ArXiv Paper]](insert_link) 
