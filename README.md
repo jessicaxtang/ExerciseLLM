@@ -8,8 +8,6 @@ KITE Research Institute 2024
 Pipeline Diagram:
 ![Pipeline Diagram](images/pipeline_diagram.png)
 
-(add citations block)
-
 ## Table of Content
 * [1. Installation](#1-installation)
 * [2. Datasets](#2-datasets)
@@ -111,7 +109,7 @@ Visualize UI-PRMD movements by running `UI-PRMD_visualization.ipynb`
 
 ## 4. Acknowledgements
 
-* public code 
-* (add contributor names)
+This research was funded by the New Frontiers in Research Fund, Canada, and the TRANSFORM HF Undergraduate Summer Research Program, Canada.
+Contributors are [Jessica Tang](mailto:jessicao.tang@mail.utoronto.ca), [Ali Abedi](ali.abedi@uhn.ca), [Tracey Colella](tracey.colella@uhn.ca), [Shehroz Khan](shehroz.khan@uhn.ca).
 
 ## Citation
