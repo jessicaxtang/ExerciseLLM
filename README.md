@@ -1,7 +1,7 @@
 # ExerciseLLM
 [ARIAL@IJCAI2025] Python code and dataset repository for paper "Rehabilitation Exercise Quality Assessment and Feedback Generation Using Large Language Models with Prompt Engineering"
 
-[[ArXiv Paper]](insert_link) 
+[[ArXiv Paper]](https://arxiv.org/abs/2505.18412v1) 
 
 Pipeline Diagram:
 ![Pipeline Diagram](images/pipeline_diagram.png)
